@@ -21,29 +21,28 @@
 
 #include <LiquidCrystal_PCF8574.h>
 #include <Wire.h>
-#include <AccelStepper.h>
 #include <SD.h>
 #include <SPI.h>
+#include "MotorUnit.h"
 
 
-#define MAX_FRAMES 1000                 // maximum number of frames, used to initialize the keyframeValues-array
 
 // external hardware
 LiquidCrystal_PCF8574 lcd(0x27);        // set the LCD address to 0x27
 const uint8_t pinLed = 13;
 const uint8_t pinBuzzer = 23;
 
-// Stepper-Motor #1
-const uint8_t pinStepper1Dir = 34;
-const uint8_t pinStepper1Step = 35;
-AccelStepper stepper1(1, pinStepper1Step, pinStepper1Dir);
+#define UNIT_COUNT 2
+MotorUnit stepper[UNIT_COUNT];
+String filenames[UNIT_COUNT] = {"CURVE1.DAT", "CURVE0.DAT"};
+
+// Stepper-Motor Pins
+const uint8_t pinsStepper[UNIT_COUNT][3] = {
+  {33, 34, 35},     /* End-Switch; Direction; Pulse */
+  {36, 37, 38}
+};
 
 
-uint16_t maxStepperSpeed = 4000;
-
-
-DMAMEM uint16_t keyframeValues[MAX_FRAMES];    // all keyframes. assigned by read_keyframes_from_file()
-uint16_t keyframeValuesCount = 0;       // number of keyframes. assigned by read_keyframes_from_file()
 DMAMEM char keyframeValuesBin[MAX_FRAMES * 2]; // the two-byte pairs of keyframes. assigned by receive_keyframes()
 uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
 uint16_t packageSize = 0;               // size of incoming data package
@@ -53,8 +52,7 @@ String dumpFilename = "/curve";
 String fileExt = ".dat";
 
 long millisOld = 0, millisCurrent;      // meassuring time to get into the fps-rhythm
-uint8_t fps = 25;                      // frames per second for playback
-long frameDuration = 1000 / fps;        // duration of a frame in milliseconds
+long frameDuration = 1000 / MotorUnit::fps;        // duration of a frame in milliseconds
 uint16_t timesPlayed = 0;               // counts many times the sequence was repeated
 
 enum states {                           // State-Machine
@@ -107,7 +105,6 @@ void buzzer_beep(uint8_t _i = 3, uint16_t duration = 50) {
   }
 }
 
-
 /* ------------------------------------ */
 /* lists all files in root directory    */
 /* (we don't need sub-directories here) */
@@ -121,120 +118,6 @@ void listFiles() {
     entry.close();
   }
 }
-
-
-/* ------------------------------------ */
-void setup() {
-  pinMode(pinLed, OUTPUT);
-  pinMode(pinBuzzer, OUTPUT);
-  buzzer_beep();
-
-  Serial.begin(115200);
-  init_display(true);
-
-  if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("initialization of SD Card failed!");
-    return;
-  }
-
-  listFiles();
-
-  stepper1.setMaxSpeed(maxStepperSpeed);
-  stepper1.setCurrentPosition(0);
-  if (read_keyframes_from_file("/curve1.dat")) {
-    state = __PLAY;
-    Serial.println("read file, play");
-  } else {
-    state = __IDLE;
-    Serial.println("no file, idle");
-  }
-  millisOld = millis();
-}
-
-
-
-
-/* ------------------------------------ */
-void loop() {
-  if (Serial.available() >= 1) {
-    Serial.println("incoming serial");
-
-    char inChar = (char)Serial.read();
-    if (inChar == 'u') {
-      buzzer_beep(1, 100);
-      init_display();
-      lcd.print(F("receive f. serial..."));
-      receive_keyframes();
-      delay(200);
-      read_keyframes_from_file("/curve0.dat");
-      buzzer_beep(2, 100);
-    }
-    else if (inChar == 'r') {
-      init_display();
-      lcd.print(F("read from file..."));
-      read_keyframes_from_file("/curve0.dat");
-      lcd.setCursor(0, 1);
-      lcd.print(keyframeValuesCount);
-      lcd.print(F(" keyframes."));
-    }
-    else if (inChar == 'p') {
-      init_display();
-      lcd.print("play");
-      state = __PLAY;
-      Serial.println(stepper1.distanceToGo());
-    }
-  }
-
-  float speedVariation = analogRead(36);
-  speedVariation = map(speedVariation, 0, 4095, -200, 200);
-
-  millisCurrent = millis();
-
-  if (state == __PLAY) {
-    if (millisOld + frameDuration < millisCurrent) {
-      //if (stepper1.distanceToGo() == 0) {
-      //Serial.print("distance to go: ");
-      //Serial.println(stepper1.distanceToGo());
-      stepper1.moveTo(keyframeValues[keyframeIndex]);
-
-      // calculate Speed with this keyframe and upcoming keyframe
-      uint16_t deltaPos = abs( keyframeValues[keyframeIndex] - keyframeValues[keyframeIndex + 1]);
-      uint16_t motorSpeed = deltaPos * fps;
-      if (motorSpeed > maxStepperSpeed) {
-        digitalWrite(pinLed, HIGH);
-      }
-      else {
-        digitalWrite(pinLed, LOW);
-      }
-      /*
-        Serial.print(keyframeIndex);
-        Serial.print(" - ");
-        Serial.print("\tms: ");
-        Serial.print(motorSpeed);
-        Serial.print("\ti: ");
-        Serial.print(keyframeIndex);
-        Serial.print("\tcount: ");
-        Serial.println(keyframeValuesCount);
-      */
-      stepper1.setSpeed(motorSpeed);
-
-      keyframeIndex++;
-      if (keyframeIndex == keyframeValuesCount - 1) {
-        buzzer_beep(1, 200);
-        timesPlayed++;
-        lcd.setCursor(15, 3);
-        lcd.print(timesPlayed);
-        keyframeIndex = 0;
-      }
-
-      //}
-      millisOld = millisCurrent;
-    }
-    stepper1.runSpeedToPosition();
-  }
-}
-
-
 
 /* ------------------------------------ */
 /* reads keyframes as high/low Byte pairs */
@@ -259,7 +142,6 @@ void receive_keyframes() {
   // the next two bytes determine the number of curves/timelines to receive
   Serial.readBytes(buf, 2);
   curveCount =  ((buf[1] << 8) + buf[0]);
-
 
 
   // receive each curve and store it as a separate file
@@ -315,7 +197,7 @@ void receive_keyframes() {
 void write_keyframes_to_file(String dumpFilename) {
   char filename[dumpFilename.length() + 1];
   dumpFilename.toCharArray(filename, sizeof(filename));
-  File file = SD.open(filename, FILE_WRITE);
+  File file = SD.open(filename, FILE_WRITE | O_TRUNC);
 
   if (!file) {
     Serial.println(F("failed to open file for writing"));
@@ -335,31 +217,146 @@ void write_keyframes_to_file(String dumpFilename) {
 /* Reads the 2-byte keyframe pairs from */
 /* the binary file, turns them into     */
 /* uint16_t values, stores them in an   */
-/* array and sends them to              */
-/* Serial Monitor                       */
+/* array inside a MotorUnit object      */
 /* ------------------------------------ */
-bool read_keyframes_from_file(String dumpFilename) {
+bool read_keyframes_from_file(String dumpFilename, uint8_t motorIndex) {
   char filename[dumpFilename.length() + 1];
   dumpFilename.toCharArray(filename, sizeof(filename));
   File file = SD.open(filename);
 
   if (!file) {
     Serial.println(F("failed to open file for reading"));
+    stepper[motorIndex].animationLength = 0;
     return false;
   }
   uint16_t index = 0;
   while (file.available()) {
     char byteLow = file.read();
     char byteHigh = file.read();
-    keyframeValues[index] = (byteHigh << 8) + byteLow;
-    Serial.print(index);
-    Serial.print(" - ");
-    Serial.println(keyframeValues[index]);
+    uint16_t value = (byteHigh << 8) + byteLow;
+    stepper[motorIndex].setKeyframeValue(index, value);
     index++;
   }
-  keyframeValuesCount = index;
+  stepper[motorIndex].animationLength = index;
   file.close();
-
+  Serial.println("Starting Animation");
+  Serial.println(stepper[motorIndex].animationLength);
   keyframeIndex = 0;  // restart sequence
   return true;
+}
+
+
+bool read_all_files() {
+  bool allFilesRead = true;
+
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    if (read_keyframes_from_file(filenames[i], i)) {
+      Serial.println("read file: " + filenames[i]);
+    } else {
+      allFilesRead = false;
+      break;
+    }
+  }
+
+  if (allFilesRead) {
+    state = __PLAY;
+    Serial.println("all files read, PLAY");
+    return true;
+  }
+  else {
+    state = __IDLE;
+    Serial.println("error in reading files, IDLE");
+    return false;
+  }
+}
+
+/* ------------------------------------ */
+void setup() {
+  pinMode(pinLed, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
+  buzzer_beep();
+
+  Serial.begin(115200);
+  init_display(true);
+
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    Serial.println("initialization of SD Card failed!");
+    return;
+  }
+
+  listFiles();
+
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    stepper[i].initDriver(pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2]);
+    stepper[i].resetPosition();
+  }
+
+  read_all_files();
+
+  millisOld = millis();
+}
+
+
+
+
+/* ------------------------------------ */
+void loop() {
+  if (Serial.available() >= 1) {
+    Serial.println("incoming serial");
+
+    char inChar = (char)Serial.read();
+    if (inChar == 'u') {
+      buzzer_beep(1, 100);
+      init_display();
+      lcd.print(F("receive f. serial..."));
+      receive_keyframes();
+      delay(200);
+      read_all_files();
+      buzzer_beep(2, 100);
+    }
+    else if (inChar == 'r') {
+      init_display();
+      lcd.print(F("read from file..."));
+      read_all_files();
+      lcd.setCursor(0, 1);
+      lcd.print(stepper[0].animationLength);
+      lcd.print(F(" keyframes."));
+    }
+    else if (inChar == 'p') {
+      init_display();
+      lcd.print("play");
+      state = __PLAY;
+    }
+  }
+
+  millisCurrent = millis();
+
+  if (state == __PLAY) {
+    MotorUnit::tooFast = false;
+    if (millisOld + frameDuration < millisCurrent) {
+      for (int i = 0; i < UNIT_COUNT; i++) {
+        stepper[i].moveToFramePosition(keyframeIndex);
+      }
+
+      digitalWrite(pinLed, MotorUnit::tooFast);
+
+
+      keyframeIndex++;
+
+      // repeat if end of timeline
+      if (keyframeIndex == stepper[0].animationLength - 1) {
+        buzzer_beep(1, 200);
+        timesPlayed++;
+        lcd.setCursor(15, 3);
+        lcd.print(timesPlayed);
+        keyframeIndex = 0;
+      }
+
+      millisOld = millisCurrent;
+    }
+
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      stepper[i].update();
+    }
+  }
 }
