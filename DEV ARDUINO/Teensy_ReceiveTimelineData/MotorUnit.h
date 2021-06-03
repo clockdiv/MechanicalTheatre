@@ -17,13 +17,15 @@ class MotorUnit {
 
     uint16_t keyframeValues[MAX_FRAMES];    // all keyframes. assigned by read_keyframes_from_file()
 
+    bool endswitchPressed;
+
   public:
     static bool tooFast;
     static uint8_t fps;                      // frames per second for playback
     uint16_t animationLength;         // number of keyframes. assigned by read_keyframes_from_file()
 
     MotorUnit();
-    void initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep);
+    void initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert = false);
     void resetPosition();
     void setKeyframeValue(uint16_t index, uint16_t value) ;
     void moveToFramePosition(uint16_t frame);

@@ -11,14 +11,17 @@ MotorUnit::MotorUnit() {
   pinDir = 0;
   pinStep = 1;
   pinEnd = 2;
+  endswitchPressed = false;
   stepper.setMaxSpeed(maxStepperSpeed);
 }
 
 
-void MotorUnit::initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep) {
+void MotorUnit::initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert) {
   stepper.setInterface(1);
   stepper.setPins( _pinStep, _pinDir);
+  stepper.setPinsInverted(directionInvert);
   pinEnd = _pinEnd;
+  pinMode(pinEnd, INPUT_PULLUP);
 }
 
 
@@ -54,5 +57,14 @@ void MotorUnit::moveToFramePosition(uint16_t frame) {
 }
 
 void MotorUnit::update() {
+  endswitchPressed = digitalRead(pinEnd);
+  /*
+  if(!endswitchPressed) {
+    Serial.println("Endswitch pressed");
+    delay(1000);
+    return;
+  }
+  */
   stepper.runSpeedToPosition();
+  
 }

@@ -37,9 +37,9 @@ MotorUnit stepper[UNIT_COUNT];
 String filenames[UNIT_COUNT] = {"CURVE1.DAT", "CURVE0.DAT"};
 
 // Stepper-Motor Pins
-const uint8_t pinsStepper[UNIT_COUNT][3] = {
-  {33, 34, 35},     /* End-Switch; Direction; Pulse */
-  {36, 37, 38}
+const uint8_t pinsStepper[UNIT_COUNT][4] = {
+  {33, 34, 35, 1},     /* End-Switch; Direction; Pulse; DirectionInvert */
+  {36, 37, 38, 0}
 };
 
 
@@ -234,6 +234,9 @@ bool read_keyframes_from_file(String dumpFilename, uint8_t motorIndex) {
     char byteLow = file.read();
     char byteHigh = file.read();
     uint16_t value = (byteHigh << 8) + byteLow;
+    //Serial.print(index);
+    //Serial.print(": ");
+    //Serial.println(value);
     stepper[motorIndex].setKeyframeValue(index, value);
     index++;
   }
@@ -287,7 +290,7 @@ void setup() {
   listFiles();
 
   for (int i = 0; i < UNIT_COUNT; i++) {
-    stepper[i].initDriver(pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2]);
+    stepper[i].initDriver(pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2], pinsStepper[i][3]);
     stepper[i].resetPosition();
   }
 
@@ -350,6 +353,8 @@ void loop() {
         lcd.setCursor(15, 3);
         lcd.print(timesPlayed);
         keyframeIndex = 0;
+        Serial.print("round: ");
+        Serial.println(timesPlayed);
       }
 
       millisOld = millisCurrent;
