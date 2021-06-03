@@ -24,7 +24,8 @@ class HARDWARE_OT_DumpTimeline(bpy.types.Operator):
 
     
     def execute(self, context):
-        serialport = "/dev/" + context.scene.dumpTimeline_props.serialports
+        #serialport = "/dev/" + context.scene.dumpTimeline_props.serialports
+        serialport = context.scene.dumpTimeline_props.serialports
         self.serial_device = serial.Serial(port=serialport, baudrate=115200, timeout=.1)
         time.sleep(1)
         print("\n\n\ndumping timeline...")
@@ -77,7 +78,7 @@ class HARDWARE_OT_DumpTimeline(bpy.types.Operator):
                 valuessent += 1
                 if valuessent % 100 == 0:
                     print("...");
-                    time.sleep(0.75)
+                    time.sleep(0.25)
             print(valuessent, end="")
             print(" frames sent in total")
             time.sleep(0.75)

@@ -34,7 +34,8 @@ const uint8_t pinBuzzer = 23;
 
 #define UNIT_COUNT 2
 MotorUnit stepper[UNIT_COUNT];
-String filenames[UNIT_COUNT] = {"CURVE1.DAT", "CURVE0.DAT"};
+String filenames[UNIT_COUNT] = {"CURVE0.DAT", "CURVE1.DAT"};
+String motornames[UNIT_COUNT] = {"X-Axis", "Y-Axis"};
 
 // Stepper-Motor Pins
 const uint8_t pinsStepper[UNIT_COUNT][4] = {
@@ -55,8 +56,12 @@ long millisOld = 0, millisCurrent;      // meassuring time to get into the fps-r
 long frameDuration = 1000 / MotorUnit::fps;        // duration of a frame in milliseconds
 uint16_t timesPlayed = 0;               // counts many times the sequence was repeated
 
-enum states {                           // State-Machine
+enum states { // State-Machine
+  __INCOMING_SERIAL,
+  __INIT_RESET,
+  __POST_RESET,
   __IDLE,
+  __RESET,
   __PLAY
 } state;
 
@@ -242,8 +247,8 @@ bool read_keyframes_from_file(String dumpFilename, uint8_t motorIndex) {
   }
   stepper[motorIndex].animationLength = index;
   file.close();
-  Serial.println("Starting Animation");
-  Serial.println(stepper[motorIndex].animationLength);
+  //Serial.println("Starting Animation");
+  //Serial.println(stepper[motorIndex].animationLength);
   keyframeIndex = 0;  // restart sequence
   return true;
 }
@@ -262,13 +267,11 @@ bool read_all_files() {
   }
 
   if (allFilesRead) {
-    state = __PLAY;
-    Serial.println("all files read, PLAY");
+    Serial.println("all files read");
     return true;
   }
   else {
-    state = __IDLE;
-    Serial.println("error in reading files, IDLE");
+    Serial.println("error in reading files");
     return false;
   }
 }
@@ -290,11 +293,12 @@ void setup() {
   listFiles();
 
   for (int i = 0; i < UNIT_COUNT; i++) {
-    stepper[i].initDriver(pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2], pinsStepper[i][3]);
-    stepper[i].resetPosition();
+    stepper[i].initDriver(motornames[i], pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2], pinsStepper[i][3]);
   }
 
   read_all_files();
+
+  state = __INIT_RESET;
 
   millisOld = millis();
 }
@@ -304,37 +308,80 @@ void setup() {
 
 /* ------------------------------------ */
 void loop() {
-  if (Serial.available() >= 1) {
-    Serial.println("incoming serial");
+  millisCurrent = millis();
+  if (state == __INCOMING_SERIAL) {
+    if (Serial.available() >= 1) {
+      Serial.println("incoming serial");
 
-    char inChar = (char)Serial.read();
-    if (inChar == 'u') {
-      buzzer_beep(1, 100);
-      init_display();
-      lcd.print(F("receive f. serial..."));
-      receive_keyframes();
-      delay(200);
-      read_all_files();
-      buzzer_beep(2, 100);
-    }
-    else if (inChar == 'r') {
-      init_display();
-      lcd.print(F("read from file..."));
-      read_all_files();
-      lcd.setCursor(0, 1);
-      lcd.print(stepper[0].animationLength);
-      lcd.print(F(" keyframes."));
-    }
-    else if (inChar == 'p') {
-      init_display();
-      lcd.print("play");
-      state = __PLAY;
+      char inChar = (char)Serial.read();
+      if (inChar == 'u') {
+        buzzer_beep(1, 100);
+        init_display();
+        lcd.print(F("receive f. serial..."));
+        receive_keyframes();
+        delay(200);
+        read_all_files();
+        buzzer_beep(2, 100);
+      }
+      else if (inChar == 'r') {
+        init_display();
+        lcd.print(F("read from file..."));
+        read_all_files();
+        lcd.setCursor(0, 1);
+        lcd.print(stepper[0].animationLength);
+        lcd.print(F(" keyframes."));
+      }
+      else if (inChar == 'p') {
+        init_display();
+        lcd.print("play");
+        state = __PLAY;
+      }
+    } else {
+      lcd.setCursor(0,0);
+      lcd.print("idle");
+      Serial.print("idle after incoming serial");
+      state = __IDLE;
     }
   }
+  else if (state == __INIT_RESET) {
+    Serial.println("Init Reset");
 
-  millisCurrent = millis();
-
-  if (state == __PLAY) {
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      stepper[i].resetPosition();
+    }
+    state = __RESET;
+  }
+  else if (state == __RESET) {
+    uint8_t resettedCounter = 0;
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      stepper[i].updateReset();
+      if (stepper[i].endswitchPressed == LOW) {
+        resettedCounter++;
+      }
+    }
+    if (resettedCounter == UNIT_COUNT) {
+      state = __POST_RESET;
+      buzzer_beep(2, 500);
+    }
+  }
+  else if (state == __POST_RESET) {
+    uint8_t resettedCounter = 0;
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      if(stepper[i].postReset()) {
+        resettedCounter++;
+      }
+    }
+    if (resettedCounter == UNIT_COUNT) {
+      state = __IDLE;
+      buzzer_beep(2, 500);
+    }
+    
+  }
+  else if (state == __IDLE) {
+    delay(1000);
+    state = __PLAY;
+  }
+  else if (state == __PLAY) {
     MotorUnit::tooFast = false;
     if (millisOld + frameDuration < millisCurrent) {
       for (int i = 0; i < UNIT_COUNT; i++) {
@@ -342,7 +389,6 @@ void loop() {
       }
 
       digitalWrite(pinLed, MotorUnit::tooFast);
-
 
       keyframeIndex++;
 
@@ -355,13 +401,21 @@ void loop() {
         keyframeIndex = 0;
         Serial.print("round: ");
         Serial.println(timesPlayed);
+        //while(true);
       }
 
       millisOld = millisCurrent;
     }
 
     for (int i = 0; i < UNIT_COUNT; i++) {
-      stepper[i].update();
+      if(!stepper[i].update()) {
+        lcd.setCursor(0,3);
+        lcd.print(MotorUnit::temp_switchPressedCounter);
+      }
     }
   }
+}
+
+void serialEvent() {
+  state = __INCOMING_SERIAL;
 }
