@@ -3,6 +3,7 @@
 uint8_t MotorUnit::fps = 25;
 uint16_t MotorUnit::maxStepperSpeed = 4000;
 bool MotorUnit::tooFast = false;
+uint8_t MotorUnit::temp_switchPressedCounter = 0;
 
 
 MotorUnit::MotorUnit() {
@@ -12,11 +13,13 @@ MotorUnit::MotorUnit() {
   pinStep = 1;
   pinEnd = 2;
   endswitchPressed = false;
+  motorName = "";
   stepper.setMaxSpeed(maxStepperSpeed);
 }
 
 
-void MotorUnit::initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert) {
+void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert) {
+  motorName = _name;
   stepper.setInterface(1);
   stepper.setPins( _pinStep, _pinDir);
   stepper.setPinsInverted(directionInvert);
@@ -26,9 +29,39 @@ void MotorUnit::initDriver(uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, b
 
 
 void MotorUnit::resetPosition() {
-  stepper.setCurrentPosition(0);
+  //Serial.print("reset Position ");
+  //Serial.println(motorName);
+  stepper.setSpeed(-2000);
+
+
+  /*
+    Serial.println("stop detected");
+    delay(1000);
+    delay(1000);
+    stepper.setCurrentPosition(0);
+    Serial.print(motorName);
+    Serial.print(" - init complete, current Pos: ");
+    Serial.println(stepper.currentPosition());
+  */
 }
 
+void MotorUnit::updateReset() {
+  endswitchPressed = digitalRead(pinEnd);
+  if (!endswitchPressed) {
+    stepper.setAcceleration(10000);
+    stepper.move(1000);
+    return;
+  }
+  stepper.runSpeed();
+}
+bool MotorUnit::postReset() {
+  if (stepper.distanceToGo() != 0) {
+    stepper.run();
+    return false;
+  }
+    stepper.setCurrentPosition(0);
+  return true;
+}
 
 void MotorUnit::setKeyframeValue(uint16_t index, uint16_t value) {
   keyframeValues[index] = value;
@@ -56,15 +89,18 @@ void MotorUnit::moveToFramePosition(uint16_t frame) {
   stepper.setSpeed(motorSpeed);
 }
 
-void MotorUnit::update() {
+bool MotorUnit::update() {
   endswitchPressed = digitalRead(pinEnd);
-  /*
-  if(!endswitchPressed) {
-    Serial.println("Endswitch pressed");
+
+  if (!endswitchPressed) {
+    temp_switchPressedCounter++;
+    Serial.print("Endswitch pressed: ");
+    Serial.print(temp_switchPressedCounter);
+    Serial.println(motorName);
     delay(1000);
-    return;
+    return false;
   }
-  */
+
   stepper.runSpeedToPosition();
-  
+  return true;
 }
