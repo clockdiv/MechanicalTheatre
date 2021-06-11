@@ -23,6 +23,7 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
   stepper.setInterface(1);
   stepper.setPins( _pinStep, _pinDir);
   stepper.setPinsInverted(directionInvert);
+  stepper.setMinPulseWidth(20);
   pinEnd = _pinEnd;
   pinMode(pinEnd, INPUT_PULLUP);
 }
@@ -59,7 +60,7 @@ bool MotorUnit::postReset() {
     stepper.run();
     return false;
   }
-    stepper.setCurrentPosition(0);
+  stepper.setCurrentPosition(0);
   return true;
 }
 

@@ -39,8 +39,8 @@ String motornames[UNIT_COUNT] = {"X-Axis", "Y-Axis"};
 
 // Stepper-Motor Pins
 const uint8_t pinsStepper[UNIT_COUNT][4] = {
-  {33, 34, 35, 1},     /* End-Switch; Direction; Pulse; DirectionInvert */
-  {36, 37, 38, 0}
+  {33, 34, 35, 0},     /* End-Switch; Direction; Pulse; DirectionInvert */
+  {36, 37, 38, 1}
 };
 
 
@@ -359,12 +359,12 @@ void loop() {
         resettedCounter++;
       }
     }
-    if (resettedCounter == UNIT_COUNT) {
+    if (resettedCounter == UNIT_COUNT) {  // if all motor units have resetted their position...
       state = __POST_RESET;
       buzzer_beep(2, 500);
     }
   }
-  else if (state == __POST_RESET) {
+  else if (state == __POST_RESET) {   // after touching the end-switch, go back some steps to create distance
     uint8_t resettedCounter = 0;
     for (int i = 0; i < UNIT_COUNT; i++) {
       if(stepper[i].postReset()) {
