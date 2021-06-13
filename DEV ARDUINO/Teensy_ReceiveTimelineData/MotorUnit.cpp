@@ -29,10 +29,18 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
 }
 
 
-void MotorUnit::resetPosition() {
+void MotorUnit::runToHomePosition() {
   //Serial.print("reset Position ");
   //Serial.println(motorName);
+
+  endswitchPressed = digitalRead(pinEnd);
+  if (!endswitchPressed) {  // if end switch is pressed, prepare for postReset (run 1000 steps away from end-stop to create distance)
+    stepper.setAcceleration(10000);
+    stepper.move(1000);
+    return;
+  }
   stepper.setSpeed(-2000);
+  stepper.runSpeed();
 
 
   /*
@@ -46,15 +54,8 @@ void MotorUnit::resetPosition() {
   */
 }
 
-void MotorUnit::updateReset() {
-  endswitchPressed = digitalRead(pinEnd);
-  if (!endswitchPressed) {
-    stepper.setAcceleration(10000);
-    stepper.move(1000);
-    return;
-  }
-  stepper.runSpeed();
-}
+
+
 bool MotorUnit::postReset() {
   if (stepper.distanceToGo() != 0) {
     stepper.run();

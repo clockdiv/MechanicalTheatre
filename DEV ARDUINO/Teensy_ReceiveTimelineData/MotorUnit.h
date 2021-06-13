@@ -5,7 +5,6 @@
 
 #define MAX_FRAMES 7500     // maximum number of frames, used to initialize the keyframeValues-array
 
-
 class MotorUnit {
   private:
     AccelStepper stepper;
@@ -28,13 +27,12 @@ class MotorUnit {
 
     MotorUnit();
     void initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert = false);
-    void resetPosition();
-    void updateReset();
+    void runToHomePosition();
+    
     bool postReset();
     void setKeyframeValue(uint16_t index, uint16_t value) ;
     void moveToFramePosition(uint16_t frame);
     bool update();
-
 };
 
 #endif
