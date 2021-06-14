@@ -130,7 +130,7 @@ bool read_keyframes_from_file(String _filename, MotorUnit &stepper, uint8_t moto
   File file = SD.open(filename);
 
   if (!file) {
-    //   Serial.println(F("failed to open file for reading"));
+    Serial.println(F("read_keyframes_from_file: failed to open file for reading"));
     stepper.animationLength = 0;
     return false;
   }

@@ -26,7 +26,8 @@
 #include "MotorUnit.h"
 #include "FileProcess.h"
 #include "CommonFunctions.h"
-
+#include "Communication.h"
+#include "StateMachine.h"
 
 // motor units
 #define UNIT_COUNT 2                // Number of stepper motors
@@ -45,15 +46,8 @@ long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in millisecon
 uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
 
 
-// State-Machine
-enum states {
-  __INCOMING_SERIAL,
-  __RESET,
-  __POST_RESET,
-  __IDLE,
-  __PLAY
-} state;
-
+states state;
+states state_old;
 void __incoming_serial();
 void __reset();
 void __post_reset();
@@ -74,9 +68,12 @@ void setup() {
   // Initialize SD-Card
   if (!SD.begin(BUILTIN_SDCARD)) {
     Serial.println("initialization of SD Card failed!");
-    return;
   }
 
+  // Set i2c communication events
+  //Communication::beginCommunication();
+  beginCommunication();
+  
   // FileProcess::listFiles();
 
   // Initialize Motors
@@ -89,9 +86,9 @@ void setup() {
     Serial.println("all files read");
   }
   else {
-    Serial.println("error in reading files");
+    Serial.println("error while reading files during startup");
   }
-
+  
   state = __RESET;
 
   millisOld = millis();
@@ -102,9 +99,19 @@ void setup() {
 
 /* ------------------------------------ */
 void loop() {
-
+  if (state != state_old) {
+    Serial.print(F("new state: "));
+    Serial.println(stateStrings[state]);
+  }
   millisCurrent = millis();
 
+  smRun();
+}
+
+
+void smRun() {
+  state_old = state; 
+  
   switch (state) {
     case __INCOMING_SERIAL:
       __incoming_serial();
@@ -221,7 +228,7 @@ void __post_reset() {
 
 void __idle() {
   delay(1000);
-  state = __PLAY;
+  //state = __PLAY;
 }
 
 
