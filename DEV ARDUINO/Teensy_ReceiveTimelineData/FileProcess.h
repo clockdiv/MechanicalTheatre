@@ -1,9 +1,8 @@
-#include "arduino.h"
-#include <SD.h>
-#include <SPI.h>
-
 #ifndef FileProcess_h
 #define FileProcess_h
+
+#include <SD.h>
+#include <SPI.h>
 
 #include "MotorUnit.h"
 
