@@ -26,7 +26,7 @@ void clear_display() {
   lcd.setCursor(0, 0);
 }
 
-void print(String s, uint8_t x, uint8_t y) {
+void print_display(String s, uint8_t x, uint8_t y) {
   lcd.setCursor(x, y);
   lcd.print(s);
 }
