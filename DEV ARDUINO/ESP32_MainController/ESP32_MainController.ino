@@ -1,12 +1,16 @@
 #include <InputDebounce.h> // InputDebounce Library by Mario Ban Version 1.6
 #include <Wire.h>
-#include "/Users/julian/Buschcloud/02__PROJEKTE/20210901 Magdeburg Mechanisches Theater/MechanicalTheatre/DEV ARDUINO/Teensy_ReceiveTimelineData/MotorUnit.h"
-#include "LCDFunctions.h"
 
 #define PIN_PROX_SENSOR     35
 #define PIN_RELAIS_COINSLOT 2
 #define PIN_RELAIS_5V24V    15
 #define PIN_BUZZER          23
+
+//#include "/Users/julian/Buschcloud/02__PROJEKTE/20210901 Magdeburg Mechanisches Theater/MechanicalTheatre/DEV ARDUINO/Teensy_ReceiveTimelineData/MotorUnit.h"
+#include "C:\Users\Julian\Desktop\MechanicalTheatre\DEV ARDUINO\Teensy_ReceiveTimelineData\MotorUnit.h"
+#include "C:\Users\Julian\Desktop\MechanicalTheatre\DEV ARDUINO\Teensy_ReceiveTimelineData\CommonFunctions.h"
+#include "LCDFunctions.h"
+#include "Communication.h"
 
 #define BUTTON_DEBOUNCE_DELAY   20   // [ms]
 
@@ -24,6 +28,7 @@ char i2cDatabuf[I2C_MEM_LEN];
 
 // Timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
+long stateRequestInterval = 2000;           // interval on how often Teensy's state is requested
 //long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t timesPlayed = 0;               // counts many times the sequence was repeated
 
@@ -35,8 +40,6 @@ uint8_t state = STARTUP;
 uint8_t state_old = 255;
 void smRun();
 
-// Function Declarations
-void buzzer_beep(uint8_t _i = 3, uint16_t duration = 50);
 
 // Debounce-Libray Callbacks
 void coinSlot_pressedCallback(uint8_t pinIn) { Serial.println(F("coin insert")); state = START_SHOW; }
@@ -49,6 +52,9 @@ void coinSlotISR() { counter++; }
 
 //
 void enableSlotMachine(bool stat);
+
+
+
 
 /* ------------------------------------ */
 /* Setup                                */
@@ -69,26 +75,6 @@ void setup() {
   LCDFunctions::init_display();
   relais_state = false;
 
-
-  
-  uint8_t target = 0x66; // target Slave address
-
-  while(1) {
-    LCDFunctions::print("request..");
-    buzzer_beep(1, 20);
-    // Read from Slave
-    //Wire.requestFrom(target, (size_t)I2C_MEM_LEN); // Read from Slave (string len unknown, request full buffer)
-    Wire.requestFrom(8, 6); // Request 2 bytes from target device
-    // Check if error occured
-    while(Wire.available()) {
-      buzzer_beep(2, 20);
-      char c = Wire.read();
-      LCDFunctions::print(String(c));
-    }
-
-    delay(2000);
-  }
- 
 }
 
 
@@ -103,11 +89,6 @@ void loop() {
 
   millisCurrent = millis();
   smRun();
-
-
-  //    delay(1000);
-  //  Serial.println(counter);
-
 }
 
 /* ------------------------------------ */
@@ -129,7 +110,15 @@ void smRun() {
     case WAIT:
       // check the coin slot machine. if coin is insert:
       // switch to state START_SHOW
-      coinSlotInput.process(millisCurrent); // callbacks called in context of this function
+      //coinSlotInput.process(millisCurrent); // callbacks called in context of this function
+      
+      if(millisCurrent - millisOld > stateRequestInterval) {
+        Serial.print(F("Teensy state: "));
+        if (Communication::teensyRequestState() == 3) {  // IDLE-MODE
+          state = START_SHOW;
+        }
+        millisOld = millisCurrent;
+      }
       break;
 
 
@@ -137,33 +126,21 @@ void smRun() {
       // 1) turn on relais for main power supplies (5V + 24V)
       enableSlotMachine(false);
       enableMainPower(true);
+      Communication::sendRunCommand();
       
       buzzer_beep(3, 50);
       state = RUN;
-      
-
       break;
 
 
     case RUN:
+      // Send Command to Teensy to run the Show
       break;
     default:
       break;
   }
 }
 
-
-/* ------------------------------------ */
-/* beep the BUZZER n times               */
-/* ------------------------------------ */
-void buzzer_beep(uint8_t _i, uint16_t duration) {
-  for (int i = 0; i < _i; i++) {
-    digitalWrite(PIN_BUZZER, HIGH);
-    delay(duration);
-    digitalWrite(PIN_BUZZER, LOW);
-    delay(duration);
-  }
-}
 
 void enableSlotMachine(bool stat) {
   digitalWrite(PIN_RELAIS_COINSLOT, stat);
