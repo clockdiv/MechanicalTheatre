@@ -1,4 +1,4 @@
-19863933244432708
+19873676981781708
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -6139,6 +6139,34 @@ OLED-I2C
 4
 4
 Clockdiv-KiCad
+RJ45_Conrad_8x
+
+RJ45 Magjack 8x
+0
+70
+65
+Clockdiv-KiCad
+RJ45_Conrad_1586526
+https://www.conrad.de/de/p/modulare-einbaubuchse-buchse-einbau-horizontal-tc-a-20042-lp-fs-203-tru-components-1586526-1-st-1586526.html
+RJ45 Magjack
+0
+10
+9
+Clockdiv-KiCad
+Terminalblock_1x4_3.81mm
+https://www.diodes.com/assets/Datasheets/ds21203.pdf
+
+0
+8
+4
+Clockdiv-KiCad
+Terminalblock_1x4_5.08mm
+
+
+0
+8
+4
+Clockdiv-KiCad
 XLR Buchse
 
 
@@ -6146,7 +6174,21 @@ XLR Buchse
 3
 3
 Clockdiv-Logos
+sun
+
+
+0
+0
+0
+Clockdiv-Logos
 sunrocketpalmtree
+
+
+0
+0
+0
+Clockdiv-Logos
+sunrocketpalmtree_21.7mm
 
 
 0

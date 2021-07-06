@@ -1,0 +1,350 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 2 15
+Title "Stepper Connection"
+Date "2021-06-21"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Clockdiv-KiCad-library:RJ45x8 J11
+U 1 1 61132C51
+P 7250 3650
+F 0 "J11" H 7307 4317 50  0000 C CNN
+F 1 "RJ45 8x Socket" H 7307 4226 50  0000 C CNN
+F 2 "Clockdiv-KiCad:RJ45_Conrad_8x" V 7250 3675 50  0001 C CNN
+F 3 "~" V 7250 3675 50  0001 C CNN
+	1    7250 3650
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR068
+U 1 1 61132C57
+P 6850 3950
+F 0 "#PWR068" H 6850 3700 50  0001 C CNN
+F 1 "GND" V 6850 3850 50  0000 R CNN
+F 2 "" H 6850 3950 50  0001 C CNN
+F 3 "" H 6850 3950 50  0001 C CNN
+	1    6850 3950
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR067
+U 1 1 61132C5D
+P 6850 3450
+F 0 "#PWR067" H 6850 3300 50  0001 C CNN
+F 1 "+5V" V 6865 3578 50  0000 L CNN
+F 2 "" H 6850 3450 50  0001 C CNN
+F 3 "" H 6850 3450 50  0001 C CNN
+	1    6850 3450
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Clockdiv-KiCad-library:SN74AHCT125N U5
+U 2 1 61132C69
+P 5100 3300
+F 0 "U5" H 5300 3200 50  0000 C CNN
+F 1 "SN74AHCT125N" H 5450 3450 50  0000 C CNN
+F 2 "Package_SO:SO-14_5.3x10.2mm_P1.27mm" H 5100 3300 50  0001 C CNN
+F 3 "https://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=https%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fsn74ahct125" H 5100 3300 50  0001 C CNN
+	2    5100 3300
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR059
+U 1 1 61132C73
+P 4800 3250
+F 0 "#PWR059" H 4800 3000 50  0001 C CNN
+F 1 "GND" V 4805 3122 50  0000 R CNN
+F 2 "" H 4800 3250 50  0001 C CNN
+F 3 "" H 4800 3250 50  0001 C CNN
+	1    4800 3250
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4800 3350 4450 3350
+$Comp
+L Clockdiv-KiCad-library:SN74HC14S U6
+U 1 1 61132C7B
+P 5400 4700
+F 0 "U6" H 5650 4800 50  0000 R CNN
+F 1 "SN74HC14S" H 5900 4600 50  0000 R CNN
+F 2 "Package_SO:SO-14_5.3x10.2mm_P1.27mm" H 5400 4700 50  0001 C CNN
+F 3 "https://www.ti.com/lit/gpn/sn74hc14" H 5400 4700 50  0001 C CNN
+	1    5400 4700
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 4700 4450 4700
+$Comp
+L power:GND #PWR063
+U 1 1 61132C83
+P 5450 5000
+F 0 "#PWR063" H 5450 4750 50  0001 C CNN
+F 1 "GND" H 5400 4950 50  0000 R CNN
+F 2 "" H 5450 5000 50  0001 C CNN
+F 3 "" H 5450 5000 50  0001 C CNN
+	1    5450 5000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR064
+U 1 1 61132C89
+P 5550 4300
+F 0 "#PWR064" H 5550 4150 50  0001 C CNN
+F 1 "+3.3V" V 5550 4400 50  0000 L CNN
+F 2 "" H 5550 4300 50  0001 C CNN
+F 3 "" H 5550 4300 50  0001 C CNN
+	1    5550 4300
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R17
+U 1 1 61132C8F
+P 6400 4550
+F 0 "R17" H 6470 4596 50  0000 L CNN
+F 1 "1k" H 6470 4505 50  0000 L CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 6330 4550 50  0001 C CNN
+F 3 "~" H 6400 4550 50  0001 C CNN
+	1    6400 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R16
+U 1 1 61132C97
+P 6000 4550
+F 0 "R16" H 5930 4504 50  0000 R CNN
+F 1 "10k" H 5930 4595 50  0000 R CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5930 4550 50  0001 C CNN
+F 3 "~" H 6000 4550 50  0001 C CNN
+	1    6000 4550
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	5700 4700 6000 4700
+Connection ~ 6000 4700
+Wire Wire Line
+	5450 4500 5450 4400
+$Comp
+L Device:C C6
+U 1 1 61132CA1
+P 6000 4850
+F 0 "C6" H 6115 4896 50  0000 L CNN
+F 1 "0.1uF 16V" H 6115 4805 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder" H 6038 4700 50  0001 C CNN
+F 3 "~" H 6000 4850 50  0001 C CNN
+	1    6000 4850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5450 5000 5450 4900
+Wire Wire Line
+	5450 5000 6000 5000
+Connection ~ 5450 5000
+Wire Wire Line
+	6000 4400 5450 4400
+Wire Wire Line
+	6000 4700 6400 4700
+$Comp
+L power:GND #PWR060
+U 1 1 61132CAC
+P 4950 4300
+F 0 "#PWR060" H 4950 4050 50  0001 C CNN
+F 1 "GND" V 4950 4200 50  0000 R CNN
+F 2 "" H 4950 4300 50  0001 C CNN
+F 3 "" H 4950 4300 50  0001 C CNN
+	1    4950 4300
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5450 4400 5450 4300
+Connection ~ 5450 4400
+Connection ~ 5450 4300
+Wire Wire Line
+	5450 4300 5550 4300
+Wire Wire Line
+	4950 4300 5150 4300
+$Comp
+L Device:C C5
+U 1 1 61132CB8
+P 5300 4300
+F 0 "C5" V 5250 4350 50  0000 L CNN
+F 1 "0.1uF 16V " V 5400 4100 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder" H 5338 4150 50  0001 C CNN
+F 3 "~" H 5300 4300 50  0001 C CNN
+F 4 "place near SN74HC14s" V 5400 3700 50  0000 C CNN "Comment"
+	1    5300 4300
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Clockdiv-KiCad-library:SN74AHCT125N U5
+U 1 1 61132CC0
+P 5100 2750
+F 0 "U5" H 5200 2650 50  0000 L CNN
+F 1 "SN74AHCT125N" H 5150 2900 50  0000 L CNN
+F 2 "Package_SO:SO-14_5.3x10.2mm_P1.27mm" H 5100 2750 50  0001 C CNN
+F 3 "https://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=https%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fsn74ahct125" H 5100 2750 50  0001 C CNN
+	1    5100 2750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR062
+U 1 1 61132CC6
+P 5050 2950
+F 0 "#PWR062" H 5050 2700 50  0001 C CNN
+F 1 "GND" H 5000 2900 50  0000 R CNN
+F 2 "" H 5050 2950 50  0001 C CNN
+F 3 "" H 5050 2950 50  0001 C CNN
+	1    5050 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR058
+U 1 1 61132CCC
+P 4800 2700
+F 0 "#PWR058" H 4800 2450 50  0001 C CNN
+F 1 "GND" V 4805 2572 50  0000 R CNN
+F 2 "" H 4800 2700 50  0001 C CNN
+F 3 "" H 4800 2700 50  0001 C CNN
+	1    4800 2700
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+5V #PWR061
+U 1 1 61132CD2
+P 5050 2550
+F 0 "#PWR061" H 5050 2400 50  0001 C CNN
+F 1 "+5V" H 4850 2600 50  0000 L CNN
+F 2 "" H 5050 2550 50  0001 C CNN
+F 3 "" H 5050 2550 50  0001 C CNN
+	1    5050 2550
+	1    0    0    -1  
+$EndComp
+Text Label 3600 2300 0    200  ~ 0
+STEPPER_MOTOR_CONNECTION_1
+Text Notes 6800 3100 2    50   ~ 0
+DIR
+Text Notes 6450 3250 2    50   ~ 0
+STEP
+Text Notes 6800 3850 2    50   ~ 0
+END 2
+Text Notes 6800 4050 2    50   ~ 0
+END 1
+Wire Wire Line
+	6650 2750 6650 3350
+Wire Wire Line
+	6650 3350 6850 3350
+Wire Wire Line
+	6400 4050 6850 4050
+$Comp
+L Connector:Conn_01x02_Male J10
+U 1 1 61169CFA
+P 5400 3650
+F 0 "J10" H 5450 3700 25  0000 C CNN
+F 1 "Conn_01x02_General Purpose 01" H 5050 3650 25  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 5400 3650 50  0001 C CNN
+F 3 "~" H 5400 3650 50  0001 C CNN
+	1    5400 3650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5400 2750 6650 2750
+Wire Wire Line
+	5400 3300 6500 3300
+Wire Wire Line
+	6500 3300 6500 3550
+Wire Wire Line
+	6500 3550 6850 3550
+Wire Wire Line
+	6400 4050 6400 4400
+$Comp
+L power:GND #PWR065
+U 1 1 61177E08
+P 5900 3550
+F 0 "#PWR065" H 5900 3300 50  0001 C CNN
+F 1 "GND" V 5900 3400 50  0000 R CNN
+F 2 "" H 5900 3550 50  0001 C CNN
+F 3 "" H 5900 3550 50  0001 C CNN
+	1    5900 3550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R R15
+U 1 1 6117812E
+P 5750 3850
+F 0 "R15" V 5750 3900 50  0000 R CNN
+F 1 "10k" V 5680 3895 50  0000 R CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5680 3850 50  0001 C CNN
+F 3 "~" H 5750 3850 50  0001 C CNN
+	1    5750 3850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R R14
+U 1 1 61178578
+P 5750 3550
+F 0 "R14" V 5750 3600 50  0000 R CNN
+F 1 "10k" V 5850 3600 50  0000 R CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5680 3550 50  0001 C CNN
+F 3 "~" H 5750 3550 50  0001 C CNN
+	1    5750 3550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR066
+U 1 1 6117A60B
+P 5900 3850
+F 0 "#PWR066" H 5900 3600 50  0001 C CNN
+F 1 "GND" V 5900 3700 50  0000 R CNN
+F 2 "" H 5900 3850 50  0001 C CNN
+F 3 "" H 5900 3850 50  0001 C CNN
+	1    5900 3850
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	5600 3550 5600 3650
+Wire Wire Line
+	5600 3750 5600 3850
+Wire Wire Line
+	5600 3650 6850 3650
+Connection ~ 5600 3650
+Wire Wire Line
+	5600 3750 6850 3750
+Connection ~ 5600 3750
+Wire Wire Line
+	6850 3850 6300 3850
+Wire Wire Line
+	6300 3850 6300 4050
+Text Notes 4600 3800 0    25   ~ 0
+simply two unused lines from cat cable. \npulled to gnd if unused, otherwise for\nprototyping / testing..
+Text HLabel 4450 2800 0    50   Input ~ 0
+Stepper_DIR
+Wire Wire Line
+	4450 2800 4800 2800
+Text HLabel 4450 3350 0    50   Input ~ 0
+Stepper_STEP
+Text HLabel 4450 4700 0    50   Output ~ 0
+Stepper_END
+Text HLabel 4450 4050 0    50   Output ~ 0
+END_ALL
+Wire Wire Line
+	4450 4050 6300 4050
+$Comp
+L power:GND #PWR0153
+U 1 1 60D784FB
+P 7250 3150
+F 0 "#PWR0153" H 7250 2900 50  0001 C CNN
+F 1 "GND" V 7250 3000 50  0000 R CNN
+F 2 "" H 7250 3150 50  0001 C CNN
+F 3 "" H 7250 3150 50  0001 C CNN
+	1    7250 3150
+	-1   0    0    1   
+$EndComp
+$EndSCHEMATC
