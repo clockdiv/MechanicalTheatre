@@ -332,11 +332,12 @@ END_ALL
 Wire Wire Line
 	4350 4450 6200 4450
 $Comp
-L Clockdiv-KiCad-library:RJ45x8 J?
+L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J?
 U 3 1 61295591
 P 7150 4050
 AR Path="/6111FD42/61295591" Ref="J?"  Part="1" 
 AR Path="/611E3121/61295591" Ref="J11"  Part="3" 
+AR Path="/61295591" Ref="J11"  Part="3" 
 F 0 "J11" H 7207 4717 50  0000 C CNN
 F 1 "RJ45 8x Socket" H 7207 4626 50  0000 C CNN
 F 2 "Clockdiv-KiCad:RJ45_Conrad_8x" V 7150 4075 50  0001 C CNN

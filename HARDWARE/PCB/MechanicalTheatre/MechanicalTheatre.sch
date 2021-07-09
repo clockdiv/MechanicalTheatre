@@ -390,7 +390,7 @@ I2C_SCL
 Text Label 13700 2250 0    50   ~ 0
 I2C_SDA
 $Comp
-L Clockdiv-KiCad-library:RJ45x8 J12
+L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J12
 U 7 1 60CB01E9
 P 3550 7600
 F 0 "J12" H 3607 8267 50  0000 C CNN
@@ -481,7 +481,7 @@ Wire Notes Line
 Text Label 950  6850 0    50   ~ 0
 LED_WALL-Connector
 $Comp
-L Clockdiv-KiCad-library:RJ45x8 J12
+L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J12
 U 8 1 60CDF8A4
 P 14050 5450
 F 0 "J12" H 14107 6117 50  0000 C CNN

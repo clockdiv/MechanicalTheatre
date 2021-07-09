@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Clockdiv-KiCad-library:RJ45x8 J11
+L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J11
 U 1 1 61132C51
 P 7250 3650
 F 0 "J11" H 7307 4317 50  0000 C CNN

@@ -14,11 +14,12 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Clockdiv-KiCad-library:RJ45x8 J?
+L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J?
 U 6 1 60F28967
 P 7300 4200
 AR Path="/6111FD42/60F28967" Ref="J?"  Part="1" 
 AR Path="/60F0CD1D/60F28967" Ref="J12"  Part="6" 
+AR Path="/60F28967" Ref="J12"  Part="6" 
 F 0 "J12" H 7357 4867 50  0000 C CNN
 F 1 "RJ45 8x Socket" H 7357 4776 50  0000 C CNN
 F 2 "Clockdiv-KiCad:RJ45_Conrad_8x" V 7300 4225 50  0001 C CNN
