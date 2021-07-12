@@ -25,7 +25,7 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
   stepper.setPinsInverted(directionInvert);
   stepper.setMinPulseWidth(20);
   pinEnd = _pinEnd;
-  pinMode(pinEnd, INPUT_PULLUP);
+  pinMode(pinEnd, INPUT);
 }
 
 
@@ -34,12 +34,12 @@ void MotorUnit::runToHomePosition() {
   //Serial.println(motorName);
 
   endswitchPressed = digitalRead(pinEnd);
-  if (!endswitchPressed) {  // if end switch is pressed, prepare for postReset (run 1000 steps away from end-stop to create distance)
+  if (endswitchPressed) {  // if end switch is pressed, prepare for postReset (run 1000 steps away from end-stop to create distance)
     stepper.setAcceleration(10000);
-    stepper.move(1000);
+    stepper.move(100);
     return;
   }
-  stepper.setSpeed(-2000);
+  stepper.setSpeed(-500); // run to home position; change to -2000
   stepper.runSpeed();
 
 
@@ -92,17 +92,25 @@ void MotorUnit::moveToFramePosition(uint16_t frame) {
 }
 
 bool MotorUnit::update() {
+  if (!checkEndswitch()) 
+    return false;
+  
+  stepper.runSpeedToPosition();
+  return true;
+}
+
+bool MotorUnit::checkEndswitch() {
   endswitchPressed = digitalRead(pinEnd);
 
-  if (!endswitchPressed) {
+  if (endswitchPressed) {
     temp_switchPressedCounter++;
     Serial.print("Endswitch pressed: ");
-    Serial.print(temp_switchPressedCounter);
-    Serial.println(motorName);
-    delay(1000);
+    Serial.print(motorName);
+    Serial.print("\t#");
+    Serial.println(temp_switchPressedCounter);
     return false;
   }
 
-  stepper.runSpeedToPosition();
   return true;
+
 }

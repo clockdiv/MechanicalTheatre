@@ -33,6 +33,8 @@ class MotorUnit {
     void setKeyframeValue(uint16_t index, uint16_t value) ;
     void moveToFramePosition(uint16_t frame);
     bool update();
+
+    bool checkEndswitch();
 };
 
 #endif

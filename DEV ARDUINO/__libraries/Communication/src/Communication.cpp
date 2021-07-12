@@ -5,7 +5,6 @@
 
 namespace Communication {
   void beginCommunication() {
-    Serial.println("begin communication");
     Wire.begin(TEENSY_I2C_ADDR);
     Wire.onRequest(requestEvent);
     Wire.onReceive(receiveEvent);
@@ -13,8 +12,7 @@ namespace Communication {
 
 
   void requestEvent() {
-    Serial.print("request coming in. ");
-    Serial.print("State from requestEvent: ");
+    Serial.println(F("requestEvent coming in. current State: "));
     //Serial.println(state);
     //Wire.write(state);
   }

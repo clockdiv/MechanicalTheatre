@@ -1,5 +1,6 @@
-#ifndef CONFIGURATIONS_H
-#define CONFIGURATIONS_H
+#ifndef CONFIGURATIONS10_H
+#define CONFIGURATIONS10_H
+#include <Arduino.h>
 
 // Number of stepper motors
 #define UNIT_COUNT 10                
@@ -21,7 +22,7 @@
 #define STEPPER_2_PULSE_PIN     38
 #define STEPPER_2_IS_INVERTED   1
 
-// Halbkugeln
+// Schwäne schwimmen
 #define STEPPER_3_ENDSWITCH_PIN 39
 #define STEPPER_3_DIRECTION_PIN 40
 #define STEPPER_3_PULSE_PIN     41
@@ -31,15 +32,9 @@
 #define STEPPER_4_ENDSWITCH_PIN 15
 #define STEPPER_4_DIRECTION_PIN 16
 #define STEPPER_4_PULSE_PIN     17
-#define STEPPER_4_IS_INVERTED   0   // unknown yet
+#define STEPPER_4_IS_INVERTED   1   // unknown yet
 
-// Schwäne schwimmen
-#define STEPPER_5_ENDSWITCH_PIN 20
-#define STEPPER_5_DIRECTION_PIN 21
-#define STEPPER_5_PULSE_PIN     22
-#define STEPPER_5_IS_INVERTED   0   // unknown yet
-
-// Schwäne schwimmen
+// Halbkugeln
 #define STEPPER_5_ENDSWITCH_PIN 20
 #define STEPPER_5_DIRECTION_PIN 21
 #define STEPPER_5_PULSE_PIN     22
@@ -64,7 +59,7 @@
 #define STEPPER_8_IS_INVERTED   0   // unknown yet
 
 // Reitergruppe 2
-#define STEPPER_9_ENDSWITCH_PIN 20
+#define STEPPER_9_ENDSWITCH_PIN 29
 #define STEPPER_9_DIRECTION_PIN 28
 #define STEPPER_9_PULSE_PIN     27
 #define STEPPER_9_IS_INVERTED   0   // unknown yet
@@ -88,9 +83,9 @@ String filenames[UNIT_COUNT] = { "CURVE0.DAT",
 
 String motornames[UNIT_COUNT] = {   "Ufo_X-Axis", 
                                     "Ufo_Y-Axis", 
-                                    "Halbkugel", 
-                                    "Schwaene_tauchen", 
                                     "Schwaene_schwimmen", 
+                                    "Schwaene_tauchen", 
+                                    "Halbkugel", 
                                     "Pferde_1", 
                                     "Pferde_2",
                                     "Reiter_1", 
@@ -109,6 +104,5 @@ const uint8_t steppersConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
   {STEPPER_9_ENDSWITCH_PIN,  STEPPER_9_DIRECTION_PIN,  STEPPER_9_PULSE_PIN,  STEPPER_9_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert
   {STEPPER_10_ENDSWITCH_PIN, STEPPER_10_DIRECTION_PIN, STEPPER_10_PULSE_PIN, STEPPER_10_IS_INVERTED}
 };
-
 
 #endif

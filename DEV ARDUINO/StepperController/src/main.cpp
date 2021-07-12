@@ -24,7 +24,7 @@
 #include <Arduino.h>
 
 // local includes
-#include "Configurations.h"
+#include "Configurations4.h"
 #include "CommonFunctions.h"
 #include "StateMachine.h"
 
@@ -62,10 +62,13 @@ void setup() {
   buzzer_beep();
 
   Serial.begin(115200);
+  while(!Serial) {}
+  Serial.println(F("hello magdeburg!"));
 
   // Initialize SD-Card
   if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("initialization of SD Card failed!");
+    Serial.println(F("initialization of SD Card failed!"));
+    while(true);
   }
 
   // Set i2c communication events
@@ -81,14 +84,12 @@ void setup() {
   }
 
   // read all files and store curves in MotorUnits (stepper[])
-  if (FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
-    Serial.println("all files read");
+  if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
+    Serial.println(F("error while reading files during startup"));
+    state = __IDLE;
+  } else {
+    state = __RESET;
   }
-  else {
-    Serial.println("error while reading files during startup");
-  }
-  
-  state = __RESET;
 
   millisOld = millis();
 }
@@ -96,7 +97,7 @@ void setup() {
 /* ------------------------------------ */
 void loop() {
   if (state != state_old) {
-    Serial.print(F("new state: "));
+    Serial.print(F("state: "));
     Serial.println(stateStrings[state]);
   }
   millisCurrent = millis();
@@ -162,11 +163,10 @@ void __incoming_serial() {
       buzzer_beep(2, 100);
       delay(200);
 
-
-      // read all files after they are received and start the animation
+      // read all files after they are received and reset the animation
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
       keyframeIndex = 0;
-      state = __PLAY;
+      state = __RESET;
     }
     else if (inChar == 'r') {
       //lcd.print(F("read from file..."));
@@ -195,13 +195,13 @@ void __reset() {
   uint8_t resettedCounter = 0;
   for (int i = 0; i < UNIT_COUNT; i++) {
     steppers[i].runToHomePosition();
-    if (steppers[i].endswitchPressed == LOW) {
+    if (steppers[i].endswitchPressed == HIGH) {
       resettedCounter++;
     }
   }
   if (resettedCounter == UNIT_COUNT) {  // if all motor units have resetted their position...
     state = __POST_RESET;
-    buzzer_beep(2, 500);
+    //buzzer_beep(2, 500);
   }
 }
 
@@ -215,14 +215,20 @@ void __post_reset() {
   }
   if (resettedCounter == UNIT_COUNT) {
     state = __IDLE;
-    buzzer_beep(2, 500);
+    //buzzer_beep(2, 500);
   }
 }
 
 
 void __idle() {
-  delay(1000);
+  Serial.println();
+  Serial.println(F("___idle mode - checking end switches:___"));
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    steppers[i].checkEndswitch();
+  }
   //state = __PLAY;
+
+  delay(3000);
 }
 
 
