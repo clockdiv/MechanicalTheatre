@@ -34,6 +34,8 @@
 #include "KeyframeProcess.h"
 
 
+bool repeatShow = true;
+
 // motor units
 MotorUnit steppers[UNIT_COUNT];
 
@@ -41,15 +43,16 @@ MotorUnit steppers[UNIT_COUNT];
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
 long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
-
+uint16_t timesPlayed = 0;
 
 states state;
-states state_old;
+states stateOld;
+
 // function declarations
 void smRun();
 void __incoming_serial();
 void __reset();
-void __post_reset();
+void __wait_for_motor_init();
 void __idle();
 void __play();
 
@@ -62,7 +65,6 @@ void setup() {
   buzzer_beep();
 
   Serial.begin(115200);
-  while(!Serial) {}
   Serial.println(F("hello magdeburg!"));
 
   // Initialize SD-Card
@@ -71,33 +73,40 @@ void setup() {
     while(true);
   }
 
-  // Set i2c communication events
-  //Communication::beginCommunication();
-  
+  // Set i2c communication events  
   Communication::beginCommunication();
   
-  // FileProcess::listFiles();
-
+  
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].initDriver(motornames[i], steppersConfig[i][0], steppersConfig[i][1], steppersConfig[i][2], steppersConfig[i][3]);
+    steppers[i].initDriver(motornames[i], 
+                          steppersPinConfig[i][0], 
+                          steppersPinConfig[i][1], 
+                          steppersPinConfig[i][2], 
+                          steppersPinConfig[i][3],
+                          steppersInitConfig[i][0],
+                          steppersInitConfig[i][1]);
   }
+
+  state = __RESET;
+  stateOld = __UNDEFINED;
+
 
   // read all files and store curves in MotorUnits (stepper[])
   if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
     Serial.println(F("error while reading files during startup"));
+    buzzer_beep(1, 2000);
     state = __IDLE;
-  } else {
-    state = __RESET;
   }
-
+    
   millisOld = millis();
 }
 
+
 /* ------------------------------------ */
 void loop() {
-  if (state != state_old) {
-    Serial.print(F("state: "));
+  if (state != stateOld) {
+    Serial.print(F("state:\t\t"));
     Serial.println(stateStrings[state]);
   }
   millisCurrent = millis();
@@ -106,8 +115,9 @@ void loop() {
 }
 
 
+/* ------------------------------------ */
 void smRun() {
-  state_old = state; 
+  stateOld = state; 
   
   switch (state) {
     case __INCOMING_SERIAL:
@@ -117,9 +127,9 @@ void smRun() {
     case __RESET:
       __reset();
       break;
-      
-    case __POST_RESET:
-      __post_reset();
+    
+    case __WAIT_FOR_MOTOR_INIT:
+      __wait_for_motor_init();
       break;
       
     case __IDLE:
@@ -129,18 +139,23 @@ void smRun() {
     case __PLAY:
       __play();
       break;
-      
+    
+    case __UNDEFINED:
+      break;
+
     default:
       break;
   }
 }
 
 
+/* ------------------------------------ */
 void serialEvent() {
   state = __INCOMING_SERIAL;
 }
 
 
+/* ------------------------------------ */
 void __incoming_serial() {
   if (Serial.available() >= 1) {
     Serial.println("incoming serial");
@@ -149,7 +164,6 @@ void __incoming_serial() {
     if (inChar == 'u') {
       buzzer_beep(1, 100);
 
-      //lcd.print(F("receive f. serial..."));
       digitalWrite(PIN_EXT_LED, HIGH);
 
       int8_t receiveError = FileProcess::receive_keyframes();
@@ -169,73 +183,73 @@ void __incoming_serial() {
       state = __RESET;
     }
     else if (inChar == 'r') {
-      //lcd.print(F("read from file..."));
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
-      keyframeIndex = 0;
-      //lcd.setCursor(0, 1);
-      //lcd.print(stepper[0].animationLength);
-      //lcd.print(F(" keyframes."));
+      state = __RESET;
     }
     else if (inChar == 'p') {
-      //init_display();
-      //lcd.print("play");
+       for (int i = 0; i < UNIT_COUNT; i++) {
+        steppers[i].setPlay();
+       }
       state = __PLAY;
     }
-  } 
-  
+  }   
   else {
-    //lcd.print("idle");
     Serial.print("idle after incoming serial");
     state = __IDLE;
   }
 }
 
 
+/* ------------------------------------ */
 void __reset() {
-  bool allResetted = true;
-  
+  keyframeIndex = 0;
+
+  Serial.println(F("reseting all motors..."));
   for (int i = 0; i < UNIT_COUNT; i++) {
-    if(steppers[i].runToHomePosition() == false) {
+    steppers[i].setReset();
+  }
+
+  state = __WAIT_FOR_MOTOR_INIT;
+}
+
+
+/* ------------------------------------ */
+void __wait_for_motor_init() {
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    steppers[i].update();
+  }
+
+  bool allResetted = true;
+
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    if(!steppers[i].isIdle()) {
       allResetted = false;
     }
   }
 
   if (allResetted) {  // if all motor units have resetted their position...
-    state = __POST_RESET;
-    //buzzer_beep(2, 500);
-  }
-
-  Serial.println();
-}
-
-
-void __post_reset() {
-  uint8_t resettedCounter = 0;
-  
-  for (int i = 0; i < UNIT_COUNT; i++) {
-    if (steppers[i].postReset()) {
-      resettedCounter++;
-    }
-  }
-  if (resettedCounter == UNIT_COUNT) {
     state = __IDLE;
-    //buzzer_beep(2, 500);
   }
+
 }
 
 
+/* ------------------------------------ */
 void __idle() {
-  Serial.println();
-  Serial.println(F("___idle mode - checking end switches:___"));
   for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].checkEndswitch();
+    steppers[i].update();
   }
-  //state = __PLAY;
 
-  delay(1000);
+  if(repeatShow) {
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      steppers[i].setPlay();
+    }
+    state = __PLAY;
+  }
 }
 
 
+/* ------------------------------------ */
 void __play() {
   MotorUnit::tooFast = false;
   if (millisOld + frameDuration < millisCurrent) {
@@ -247,25 +261,16 @@ void __play() {
 
     keyframeIndex++;
 
-    // repeat if end of timeline
     if (keyframeIndex == steppers[0].animationLength - 1) {
       buzzer_beep(1, 200);
-      //timesPlayed++;
-      //lcd.setCursor(15, 3);
-      //lcd.print(timesPlayed);
-      keyframeIndex = 0;
-      //Serial.print("round: ");
-      //Serial.println(timesPlayed);
-      //while(true);
+
+      state = __RESET;
     }
 
     millisOld = millisCurrent;
   }
 
   for (int i = 0; i < UNIT_COUNT; i++) {
-    if (!steppers[i].update()) {  // false if end-switch was pressed
-      //lcd.setCursor(0,3);
-      //lcd.print(MotorUnit::temp_switchPressedCounter);
-    }
+    steppers[i].update();
   }
 }

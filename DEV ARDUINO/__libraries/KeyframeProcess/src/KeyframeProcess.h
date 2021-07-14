@@ -6,7 +6,7 @@
 
 #include "MotorUnit.h"
 
-#define MAX_FRAMES 7500     // maximum number of frames, used to initialize the keyframeValues-array
+#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 namespace FileProcess {
 
