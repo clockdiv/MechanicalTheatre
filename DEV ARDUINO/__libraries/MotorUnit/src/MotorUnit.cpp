@@ -3,7 +3,7 @@
 uint8_t MotorUnit::fps = 25;
 uint16_t MotorUnit::maxStepperSpeed = 4000;
 bool MotorUnit::tooFast = false;
-uint8_t MotorUnit::temp_switchPressedCounter = 0;
+uint16_t MotorUnit::temp_switchPressedCounter = 0;
 
 
 MotorUnit::MotorUnit() {
@@ -28,30 +28,20 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
   pinMode(pinEnd, INPUT);
 }
 
-
-void MotorUnit::runToHomePosition() {
-  //Serial.print("reset Position ");
-  //Serial.println(motorName);
-
-  endswitchPressed = digitalRead(pinEnd);
-  if (endswitchPressed) {  // if end switch is pressed, prepare for postReset (run 1000 steps away from end-stop to create distance)
-    stepper.setAcceleration(10000);
-    stepper.move(100);
-    return;
-  }
-  stepper.setSpeed(-500); // run to home position; change to -2000
-  stepper.runSpeed();
-
-
-  /*
-    Serial.println("stop detected");
-    delay(1000);
-    delay(1000);
-    stepper.setCurrentPosition(0);
-    Serial.print(motorName);
-    Serial.print(" - init complete, current Pos: ");
-    Serial.println(stepper.currentPosition());
-  */
+// return true: stopped at home position (end switch)
+// return false: still running
+bool MotorUnit::runToHomePosition() {
+  if (checkEndswitch() == false) {    // run to home position; change to -2000
+    Serial.print("0");
+    stepper.setSpeed(-1000);
+    stepper.runSpeed();
+    return false;
+  } 
+  Serial.print("1");
+  // if end switch is pressed, prepare for postReset (run 100 steps away from end-stop to create distance)
+  stepper.setAcceleration(100);
+  stepper.move(100);
+  return true;
 }
 
 
@@ -92,25 +82,28 @@ void MotorUnit::moveToFramePosition(uint16_t frame) {
 }
 
 bool MotorUnit::update() {
-  if (!checkEndswitch()) 
+  if (checkEndswitch()) 
     return false;
   
   stepper.runSpeedToPosition();
   return true;
 }
 
+
+// true: end switch pressed
+// false: not pressed
 bool MotorUnit::checkEndswitch() {
-  endswitchPressed = digitalRead(pinEnd);
+  endswitchPressed = digitalRead(pinEnd); // high if pressed
 
   if (endswitchPressed) {
     temp_switchPressedCounter++;
-    Serial.print("Endswitch pressed: ");
-    Serial.print(motorName);
-    Serial.print("\t#");
-    Serial.println(temp_switchPressedCounter);
-    return false;
+    //Serial.print("Endswitch pressed: ");
+    //Serial.println(motorName);
+    //Serial.print("\t#");
+    //Serial.println(temp_switchPressedCounter);
+    return true;
   }
 
-  return true;
+  return false;
 
 }

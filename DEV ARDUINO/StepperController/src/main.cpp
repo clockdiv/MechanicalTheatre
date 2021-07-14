@@ -24,7 +24,7 @@
 #include <Arduino.h>
 
 // local includes
-#include "Configurations4.h"
+#include "Configurations6.h"
 #include "CommonFunctions.h"
 #include "StateMachine.h"
 
@@ -192,22 +192,26 @@ void __incoming_serial() {
 
 
 void __reset() {
-  uint8_t resettedCounter = 0;
+  bool allResetted = true;
+  
   for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].runToHomePosition();
-    if (steppers[i].endswitchPressed == HIGH) {
-      resettedCounter++;
+    if(steppers[i].runToHomePosition() == false) {
+      allResetted = false;
     }
   }
-  if (resettedCounter == UNIT_COUNT) {  // if all motor units have resetted their position...
+
+  if (allResetted) {  // if all motor units have resetted their position...
     state = __POST_RESET;
     //buzzer_beep(2, 500);
   }
+
+  Serial.println();
 }
 
 
 void __post_reset() {
   uint8_t resettedCounter = 0;
+  
   for (int i = 0; i < UNIT_COUNT; i++) {
     if (steppers[i].postReset()) {
       resettedCounter++;
@@ -228,7 +232,7 @@ void __idle() {
   }
   //state = __PLAY;
 
-  delay(3000);
+  delay(1000);
 }
 
 
