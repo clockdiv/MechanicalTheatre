@@ -38,7 +38,7 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
   stepper.setInterface(1);
   stepper.setPins( _pinStep, _pinDir);
   stepper.setPinsInverted(directionInvert);
-  stepper.setMinPulseWidth(20);
+  stepper.setMinPulseWidth(50);
 
   endswitch.attach(_pinEnd, INPUT_PULLDOWN);
   endswitch.interval(25);
@@ -161,11 +161,12 @@ void MotorUnit::goingToInit() {
 
 /* ------------------------------------ */
 void MotorUnit::drivingShow() {
-  if(endswitch.risingEdge() ) {
+  if(endswitch.risingEdge() || endswitch.read() == true  ) {
     printMessage(F("\tERROR: Endswitch pressed while driving show."));
     motorState = __ENDSWITCH_ERROR;
     return;
   } 
+  
   stepper.runSpeedToPosition();
 }
 

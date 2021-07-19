@@ -4,18 +4,20 @@
 enum states {
   __INCOMING_SERIAL,
   __RESET,
-  __POST_RESET,
+  __WAIT_FOR_MOTOR_INIT,
   __IDLE,
-  __PLAY
+  __PLAY,
+  __UNDEFINED
 };
 extern states state;
 
 static String stateStrings[] = {
   "INCOMING SERIAL",
   "RESET",
-  "POST RESET",
+  "WAIT FOR MOTOR INIT",
   "IDLE",
-  "PLAY"
+  "PLAY",
+  "UNDEFINED"
 };
 
 #endif

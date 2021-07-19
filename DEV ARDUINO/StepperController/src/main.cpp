@@ -1,8 +1,8 @@
 /*
    Teensy 4.1
 
-   Current Features:
-   =================
+   Upload Blender Timeline:
+   =======================
    send 'u' over serial to set the device into upload mode:
      the device reads 2 bytes at a time (lower byte first), e.g.:
      1 (DEC)
@@ -11,12 +11,7 @@
      11111111 00000000 (BIN)
      256 (DEC)
      00000000 00000001 (BIN)
-     ...and stores it in exact the same way as binary data into a file (dumpFilename) on the SPI Flash File System.
-
-   send 'r' over serial to read this file and send its content as 16-Bit Integers back to the Serial Monitor.
-
-   Display Library from here, version 1.3.0
-   https://github.com/mathertel/LiquidCrystal_PCF8574
+     ...and stores it in exact the same way as binary data into a file on the SD-Card or the SPI Flash File System.
 */
 
 
@@ -24,7 +19,7 @@
 #include <Arduino.h>
 
 // local includes
-#include "Configurations6.h"
+#include "Configurations10.h"
 #include "CommonFunctions.h"
 #include "StateMachine.h"
 
@@ -33,6 +28,9 @@
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 
+#ifndef ARDUINO_TEENSY41
+#error "teensy 4.1 needed for this project."
+#endif
 
 bool repeatShow = true;
 

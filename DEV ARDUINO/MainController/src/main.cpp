@@ -1,8 +1,8 @@
 /*
    Teensy 4.1
 
-   Current Features:
-   =================
+   Upload Blender Timeline:
+   =======================
    send 'u' over serial to set the device into upload mode:
      the device reads 2 bytes at a time (lower byte first), e.g.:
      1 (DEC)
@@ -11,49 +11,49 @@
      11111111 00000000 (BIN)
      256 (DEC)
      00000000 00000001 (BIN)
-     ...and stores it in exact the same way as binary data into a file (dumpFilename) on the SPI Flash File System.
-
-   send 'r' over serial to read this file and send its content as 16-Bit Integers back to the Serial Monitor.
-
-   Display Library from here, version 1.3.0
-   https://github.com/mathertel/LiquidCrystal_PCF8574
+     ...and stores it in exact the same way as binary data into a file on the SD-Card or the SPI Flash File System.
 */
 
-// external hardware
-#define PIN_EXT_LED   13
-#define PIN_BUZZER    23
+#ifndef ARDUINO_ESP32_DEV
+#error "ESP32 Development board needed for this project."
+#endif
 
-#include "MotorUnit.h"
-#include "FileProcess.h"
+#include <Arduino.h>
+
+// local includes
+#include "Configurations.h"
 #include "CommonFunctions.h"
-#include "Communication.h"
 #include "StateMachine.h"
 
-// motor units
-#define UNIT_COUNT 2                // Number of stepper motors
-MotorUnit steppers[UNIT_COUNT];
-String filenames[UNIT_COUNT] = {"CURVE0.DAT", "CURVE1.DAT"};
-String motornames[UNIT_COUNT] = {"X-Axis", "Y-Axis"};
-const uint8_t pinsStepper[UNIT_COUNT][4] = {  // Stepper-Motor Pins
-  {33, 34, 35, 0},     // End-Switch; Direction; Pulse; DirectionInvert
-  {36, 37, 38, 1}
-};
+// cross-project includes
+#include "Communication.h"
+#include "MotorUnit.h"
+#include "KeyframeProcess.h"
 
+
+
+
+bool repeatShow = true;
+
+// motor units
+MotorUnit steppers[UNIT_COUNT];
 
 // timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
 long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
-
+uint16_t timesPlayed = 0;
 
 states state;
-states state_old;
+states stateOld;
+
+// function declarations
+void smRun();
 void __incoming_serial();
 void __reset();
-void __post_reset();
+void __wait_for_motor_init();
 void __idle();
 void __play();
-
 
 
 
@@ -64,43 +64,48 @@ void setup() {
   buzzer_beep();
 
   Serial.begin(115200);
+  Serial.println(F("hello magdeburg!"));
 
   // Initialize SD-Card
-  if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("initialization of SD Card failed!");
+  if(!FileProcess::initFilesystem()) {
+    Serial.println(F("Initialization of FileSystem failed!"));
+    while(true);
   }
 
-  // Set i2c communication events
+  // Set i2c communication events  
   //Communication::beginCommunication();
-  beginCommunication();
   
-  // FileProcess::listFiles();
-
+  
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].initDriver(motornames[i], pinsStepper[i][0], pinsStepper[i][1], pinsStepper[i][2], pinsStepper[i][3]);
+    steppers[i].initDriver(motornames[i], 
+                          steppersPinConfig[i][0], 
+                          steppersPinConfig[i][1], 
+                          steppersPinConfig[i][2], 
+                          steppersPinConfig[i][3],
+                          steppersInitConfig[i][0],
+                          steppersInitConfig[i][1]);
   }
+
+  state = __RESET;
+  stateOld = __UNDEFINED;
+
 
   // read all files and store curves in MotorUnits (stepper[])
-  if (FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
-    Serial.println("all files read");
+  if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
+    Serial.println(F("error while reading files during startup"));
+    buzzer_beep(1, 2000);
+    state = __IDLE;
   }
-  else {
-    Serial.println("error while reading files during startup");
-  }
-  
-  state = __RESET;
-
+    
   millisOld = millis();
 }
 
 
-
-
 /* ------------------------------------ */
 void loop() {
-  if (state != state_old) {
-    Serial.print(F("new state: "));
+  if (state != stateOld) {
+    Serial.print(F("state:\t\t"));
     Serial.println(stateStrings[state]);
   }
   millisCurrent = millis();
@@ -109,8 +114,9 @@ void loop() {
 }
 
 
+/* ------------------------------------ */
 void smRun() {
-  state_old = state; 
+  stateOld = state; 
   
   switch (state) {
     case __INCOMING_SERIAL:
@@ -120,9 +126,9 @@ void smRun() {
     case __RESET:
       __reset();
       break;
-      
-    case __POST_RESET:
-      __post_reset();
+    
+    case __WAIT_FOR_MOTOR_INIT:
+      __wait_for_motor_init();
       break;
       
     case __IDLE:
@@ -132,20 +138,23 @@ void smRun() {
     case __PLAY:
       __play();
       break;
-      
+    
+    case __UNDEFINED:
+      break;
+
     default:
       break;
   }
 }
 
 
-
-
+/* ------------------------------------ */
 void serialEvent() {
   state = __INCOMING_SERIAL;
 }
 
 
+/* ------------------------------------ */
 void __incoming_serial() {
   if (Serial.available() >= 1) {
     Serial.println("incoming serial");
@@ -154,7 +163,6 @@ void __incoming_serial() {
     if (inChar == 'u') {
       buzzer_beep(1, 100);
 
-      //lcd.print(F("receive f. serial..."));
       digitalWrite(PIN_EXT_LED, HIGH);
 
       int8_t receiveError = FileProcess::receive_keyframes();
@@ -168,70 +176,79 @@ void __incoming_serial() {
       buzzer_beep(2, 100);
       delay(200);
 
-
-      // read all files after they are received and start the animation
+      // read all files after they are received and reset the animation
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
       keyframeIndex = 0;
-      state = __PLAY;
+      state = __RESET;
     }
     else if (inChar == 'r') {
-      //lcd.print(F("read from file..."));
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
-      keyframeIndex = 0;
-      //lcd.setCursor(0, 1);
-      //lcd.print(stepper[0].animationLength);
-      //lcd.print(F(" keyframes."));
+      state = __RESET;
     }
     else if (inChar == 'p') {
-      //init_display();
-      //lcd.print("play");
+       for (int i = 0; i < UNIT_COUNT; i++) {
+        steppers[i].setPlay();
+       }
       state = __PLAY;
     }
-  } 
-  
+  }   
   else {
-    //lcd.print("idle");
     Serial.print("idle after incoming serial");
     state = __IDLE;
   }
 }
 
 
+/* ------------------------------------ */
 void __reset() {
-  uint8_t resettedCounter = 0;
+  keyframeIndex = 0;
+
+  Serial.println(F("reseting all motors..."));
   for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].runToHomePosition();
-    if (steppers[i].endswitchPressed == LOW) {
-      resettedCounter++;
-    }
+    steppers[i].setReset();
   }
-  if (resettedCounter == UNIT_COUNT) {  // if all motor units have resetted their position...
-    state = __POST_RESET;
-    buzzer_beep(2, 500);
-  }
+
+  state = __WAIT_FOR_MOTOR_INIT;
 }
 
 
-void __post_reset() {
-  uint8_t resettedCounter = 0;
+/* ------------------------------------ */
+void __wait_for_motor_init() {
   for (int i = 0; i < UNIT_COUNT; i++) {
-    if (steppers[i].postReset()) {
-      resettedCounter++;
+    steppers[i].update();
+  }
+
+  bool allResetted = true;
+
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    if(!steppers[i].isIdle()) {
+      allResetted = false;
     }
   }
-  if (resettedCounter == UNIT_COUNT) {
+
+  if (allResetted) {  // if all motor units have resetted their position...
     state = __IDLE;
-    buzzer_beep(2, 500);
+  }
+
+}
+
+
+/* ------------------------------------ */
+void __idle() {
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    steppers[i].update();
+  }
+
+  if(repeatShow) {
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      steppers[i].setPlay();
+    }
+    state = __PLAY;
   }
 }
 
 
-void __idle() {
-  delay(1000);
-  //state = __PLAY;
-}
-
-
+/* ------------------------------------ */
 void __play() {
   MotorUnit::tooFast = false;
   if (millisOld + frameDuration < millisCurrent) {
@@ -243,25 +260,16 @@ void __play() {
 
     keyframeIndex++;
 
-    // repeat if end of timeline
     if (keyframeIndex == steppers[0].animationLength - 1) {
       buzzer_beep(1, 200);
-      //timesPlayed++;
-      //lcd.setCursor(15, 3);
-      //lcd.print(timesPlayed);
-      keyframeIndex = 0;
-      //Serial.print("round: ");
-      //Serial.println(timesPlayed);
-      //while(true);
+
+      state = __RESET;
     }
 
     millisOld = millisCurrent;
   }
 
   for (int i = 0; i < UNIT_COUNT; i++) {
-    if (!steppers[i].update()) {  // false if end-switch was pressed
-      //lcd.setCursor(0,3);
-      //lcd.print(MotorUnit::temp_switchPressedCounter);
-    }
+    steppers[i].update();
   }
 }

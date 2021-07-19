@@ -1,6 +1,7 @@
 #ifndef MotorUnit_h
 #define MotorUnit_h
 
+#include <Arduino.h>
 #include "Bounce2.h"
 #include "AccelStepper.h"
 

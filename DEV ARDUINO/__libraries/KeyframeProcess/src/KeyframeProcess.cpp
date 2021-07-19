@@ -1,14 +1,27 @@
 #include "KeyframeProcess.h"
 
 
-
 namespace FileProcess {
-DMAMEM static char keyframeValuesBin[MAX_FRAMES * 2]; // the two-byte pairs of keyframes. assigned by receive_keyframes()
+
+#if defined( ARDUINO_TEENSY41 )
+  DMAMEM static char keyframeValuesBin[MAX_FRAMES * 2]; // the two-byte pairs of keyframes. assigned by receive_keyframes()
+#elif defined( ARDUINO_ESP32_DEV )
+  static char keyframeValuesBin[MAX_FRAMES * 2]; // the two-byte pairs of keyframes. assigned by receive_keyframes()
+#endif
+
 static uint16_t packageSize = 0;               // size of incoming data package
 static uint16_t curveCount = 0;                 // the number of curves/timelines to receive (each stepper one curve)
 
 static String dumpFilename = "/curve";
 static String fileExt = ".dat";
+
+bool initFilesystem() {
+  #if defined( ARDUINO_TEENSY41 )
+    return SD.begin(BUILTIN_SDCARD);
+  #elif defined( ARDUINO_ESP32_DEV )
+    return SPIFFS.begin(true);
+  #endif
+}
 
 /* ------------------------------------ */
 /* reads keyframes as high/low Byte pairs */
@@ -80,7 +93,12 @@ int8_t receive_keyframes() {
 /* (we don't need sub-directories here) */
 /* ------------------------------------ */
 void listFiles() {
-  File root = SD.open("/");
+  #if defined(ARDUINO_TEENSY41)
+    File root = SD.open("/");
+  #elif defined(ARDUINO_ESP32_DEV)
+    File root = SPIFFS.open("/");
+  #endif
+
   while (true) {
     File entry = root.openNextFile();
     if (!entry) break; // no more files
@@ -90,15 +108,19 @@ void listFiles() {
 }
 
 
-
 /* ------------------------------------ */
 /* Writes the 2-byte keyframe pairs to  */
 /* a binary file                        */
 /* ------------------------------------ */
-bool write_keyframes_to_file(String dumpFilename) {
-  char filename[dumpFilename.length() + 1];
-  dumpFilename.toCharArray(filename, sizeof(filename));
-  File file = SD.open(filename, FILE_WRITE | O_TRUNC);
+bool write_keyframes_to_file(String _filename) {
+  char filename[_filename.length() + 1];
+  _filename.toCharArray(filename, sizeof(filename));
+
+  #if defined(ARDUINO_TEENSY41)
+    File file = SD.open(filename, FILE_WRITE | O_TRUNC);
+  #elif defined(ARDUINO_ESP32_DEV)
+    File file = SPIFFS.open(_filename, FILE_WRITE);
+  #endif
 
   if (!file) {
     //   Serial.println(F("failed to open file for writing"));
@@ -126,8 +148,14 @@ bool write_keyframes_to_file(String dumpFilename) {
 /* ------------------------------------ */
 bool read_keyframes_from_file(String _filename, MotorUnit &stepper, uint8_t motorIndex) {
   char filename[_filename.length() + 1];
-  _filename.toCharArray(filename, sizeof(filename));
-  File file = SD.open(filename);
+  _filename.toCharArray(filename, sizeof(filename));;
+
+  #if defined(ARDUINO_TEENSY41)
+    File file = SD.open(filename);
+  #elif defined(ARDUINO_ESP32_DEV)
+    File file = SPIFFS.open(_filename);
+  #endif
+
 
   if (!file) {
     //Serial.println(F("read_keyframes_from_file: failed to open file for reading"));

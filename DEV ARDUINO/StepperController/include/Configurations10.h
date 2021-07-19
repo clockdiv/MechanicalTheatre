@@ -25,10 +25,10 @@ String motornames[UNIT_COUNT] = {   "Ufo_X-Axis",
                                     "Pferde_2",
                                     "Reiter_1", 
                                     "Reiter_2",
-                                    "Halbkugel", 
-                                    "Luftpumpe" };
+                                    "Vorhang", 
+                                    "Magd" };
 
-const uint8_t steppersConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
+const uint8_t steppersPinConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
   {STEPPER_1_ENDSWITCH_PIN,  STEPPER_1_DIRECTION_PIN,  STEPPER_1_PULSE_PIN,  STEPPER_1_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert
   {STEPPER_2_ENDSWITCH_PIN,  STEPPER_2_DIRECTION_PIN,  STEPPER_2_PULSE_PIN,  STEPPER_2_IS_INVERTED},
   {STEPPER_3_ENDSWITCH_PIN,  STEPPER_3_DIRECTION_PIN,  STEPPER_3_PULSE_PIN,  STEPPER_3_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert
@@ -40,5 +40,19 @@ const uint8_t steppersConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
   {STEPPER_9_ENDSWITCH_PIN,  STEPPER_9_DIRECTION_PIN,  STEPPER_9_PULSE_PIN,  STEPPER_9_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert
   {STEPPER_10_ENDSWITCH_PIN, STEPPER_10_DIRECTION_PIN, STEPPER_10_PULSE_PIN, STEPPER_10_IS_INVERTED}
 };
+
+const uint16_t steppersInitConfig[UNIT_COUNT][2] = {
+  {STEPPER_1_INIT_POS, STEPPER_1_RESET_SPEED },
+  {STEPPER_2_INIT_POS, STEPPER_2_RESET_SPEED },
+  {STEPPER_3_INIT_POS, STEPPER_3_RESET_SPEED },
+  {STEPPER_4_INIT_POS, STEPPER_4_RESET_SPEED },
+  {STEPPER_5_INIT_POS, STEPPER_5_RESET_SPEED },
+  {STEPPER_6_INIT_POS, STEPPER_6_RESET_SPEED },
+  {STEPPER_7_INIT_POS, STEPPER_7_RESET_SPEED },
+  {STEPPER_8_INIT_POS, STEPPER_8_RESET_SPEED },
+  {STEPPER_9_INIT_POS, STEPPER_9_RESET_SPEED },
+  {STEPPER_10_INIT_POS, STEPPER_10_RESET_SPEED }
+};
+
 
 #endif

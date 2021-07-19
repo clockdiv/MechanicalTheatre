@@ -1,14 +1,25 @@
 #ifndef FileProcess_h
 #define FileProcess_h
 
+#if defined(ARDUINO_TEENSY41)
 #include <SD.h>
 #include <SPI.h>
+#elif defined( ARDUINO_ESP32_DEV )
+#include "SPIFFS.h"
+#endif
+
 
 #include "MotorUnit.h"
 
 #define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 namespace FileProcess {
+
+/* ------------------------------------ */
+/* inits file system on Teensy (SD-Card)*/
+/* or ESP (SPIFFS)                      */
+/* ------------------------------------ */
+bool initFilesystem();
 
 /* ------------------------------------ */
 /* reads keyframes as high/low Byte pairs */
