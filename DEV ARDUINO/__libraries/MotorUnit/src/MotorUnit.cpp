@@ -1,8 +1,7 @@
 #include "MotorUnit.h"
 
 uint8_t MotorUnit::fps = 25;
-uint16_t MotorUnit::maxStepperSpeed = 4000;
-bool MotorUnit::tooFast = false;
+uint16_t MotorUnit::maxStepperSpeed = 6000;
 
 /* ------------------------------------ */
 String MotorUnit::stateStrings[] = {
@@ -59,11 +58,12 @@ void MotorUnit::moveToFramePosition(uint16_t frame) {
   stepper.moveTo(keyframeValues[frame]);
 
   // calculate Speed with this keyframe and upcoming keyframe
-  uint16_t deltaPos = abs( keyframeValues[frame] - keyframeValues[frame + 1]);
+  uint16_t deltaPos = abs( keyframeValues[frame] - keyframeValues[frame - 1]);
+
   uint16_t motorSpeed = deltaPos * fps;
 
   tooFast = motorSpeed > maxStepperSpeed;
-
+  
   stepper.setSpeed(motorSpeed);
 }
 
@@ -129,7 +129,7 @@ void MotorUnit::idle() {
 
 /* ------------------------------------ */
 void MotorUnit::goingToEndswitch() {
-    if(endswitch.risingEdge() || endswitch.read() == true ) {
+  if(endswitch.risingEdge() || endswitch.read() == true ) {
     printMessage(F("\tEndswitch pressed"));
     stepper.setCurrentPosition(0);
     motorState = __ENDSWITCH_PRESSED;

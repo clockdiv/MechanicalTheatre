@@ -54,13 +54,22 @@ void __reset();
 void __wait_for_motor_init();
 void __idle();
 void __play();
-
+void serialEvent();
+void powerSuppliesOn();
+void powerSuppliesOff();
 
 
 /* ------------------------------------ */
 void setup() {
   pinMode(PIN_EXT_LED, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
+
+  pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
+  pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
+
+  powerSuppliesOff();
+  digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
+
   buzzer_beep();
 
   Serial.begin(115200);
@@ -71,6 +80,8 @@ void setup() {
     Serial.println(F("Initialization of FileSystem failed!"));
     while(true);
   }
+
+  FileProcess::listFiles();
 
   // Set i2c communication events  
   //Communication::beginCommunication();
@@ -94,7 +105,8 @@ void setup() {
   // read all files and store curves in MotorUnits (stepper[])
   if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
     Serial.println(F("error while reading files during startup"));
-    buzzer_beep(1, 2000);
+    //buzzer_beep(1, 2000);
+    repeatShow = false;
     state = __IDLE;
   }
     
@@ -107,8 +119,21 @@ void loop() {
   if (state != stateOld) {
     Serial.print(F("state:\t\t"));
     Serial.println(stateStrings[state]);
+
+    // turn on/off power supplies
+    if (state == __INCOMING_SERIAL || state == __IDLE || state == __UNDEFINED) {
+      powerSuppliesOff();
+    } 
+    else if (state == __RESET || state == __WAIT_FOR_MOTOR_INIT || state == __PLAY) {
+      powerSuppliesOn();
+    }
+
   }
   millisCurrent = millis();
+
+  if (Serial.available() >= 1) {
+    serialEvent();
+  }
 
   smRun();
 }
@@ -162,24 +187,34 @@ void __incoming_serial() {
     char inChar = (char)Serial.read();
     if (inChar == 'u') {
       buzzer_beep(1, 100);
-
       digitalWrite(PIN_EXT_LED, HIGH);
 
-      int8_t receiveError = FileProcess::receive_keyframes();
+      int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
       if (receiveError == -1) {
-        // did not receive as many bytes as expected
+        // Error: Didn't receive as many bytes as expected
+        buzzer_beep(1, 1000);
       } else if (receiveError == -2) {
-        // error while writing file to sd-card
+        // Error: error while writing file
+        buzzer_beep(2, 1000);
+      } else if (receiveError == -3) {
+        // Error: number of curves not equal to number of timelines
+        buzzer_beep(3, 1000);
+      } else if (receiveError == 1) {
+        // No Error:
+        digitalWrite(PIN_EXT_LED, LOW);
+        buzzer_beep(2, 100);
+        delay(200);
+
+        // read all files after they are received and reset the animation
+        FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+        keyframeIndex = 0;
+        state = __RESET;
+        return;
       }
-
+      // Return with error:
       digitalWrite(PIN_EXT_LED, LOW);
-      buzzer_beep(2, 100);
-      delay(200);
-
-      // read all files after they are received and reset the animation
-      FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
-      keyframeIndex = 0;
       state = __RESET;
+      delay(200);
     }
     else if (inChar == 'r') {
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
@@ -199,17 +234,6 @@ void __incoming_serial() {
 }
 
 
-/* ------------------------------------ */
-void __reset() {
-  keyframeIndex = 0;
-
-  Serial.println(F("reseting all motors..."));
-  for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].setReset();
-  }
-
-  state = __WAIT_FOR_MOTOR_INIT;
-}
 
 
 /* ------------------------------------ */
@@ -243,6 +267,7 @@ void __idle() {
     for (int i = 0; i < UNIT_COUNT; i++) {
       steppers[i].setPlay();
     }
+    delay(5000);
     state = __PLAY;
   }
 }
@@ -250,19 +275,26 @@ void __idle() {
 
 /* ------------------------------------ */
 void __play() {
-  MotorUnit::tooFast = false;
-  if (millisOld + frameDuration < millisCurrent) {
-    for (int i = 0; i < UNIT_COUNT; i++) {
-      steppers[i].moveToFramePosition(keyframeIndex);
-    }
 
-    digitalWrite(PIN_EXT_LED, MotorUnit::tooFast);
+  if (millisCurrent - frameDuration > millisOld) {  
 
     keyframeIndex++;
 
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      steppers[i].moveToFramePosition(keyframeIndex);
+      if(steppers[i].tooFast) {
+        Serial.print("too fast: ");
+        Serial.print(keyframeIndex);
+        Serial.print(" Motor: ");
+        Serial.println(steppers[i].motorName);
+      }
+    }
+
+
+
     if (keyframeIndex == steppers[0].animationLength - 1) {
       buzzer_beep(1, 200);
-
+      
       state = __RESET;
     }
 
@@ -272,4 +304,18 @@ void __play() {
   for (int i = 0; i < UNIT_COUNT; i++) {
     steppers[i].update();
   }
+}
+
+
+/* ------------------------------------ */
+void powerSuppliesOn() {
+  digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
+  delay(1000);
+}
+
+
+/* ------------------------------------ */
+void powerSuppliesOff() {
+  digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
+  delay(500);
 }

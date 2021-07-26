@@ -1,6 +1,5 @@
 #include "KeyframeProcess.h"
 
-
 namespace FileProcess {
 
 #if defined( ARDUINO_TEENSY41 )
@@ -11,9 +10,6 @@ namespace FileProcess {
 
 static uint16_t packageSize = 0;               // size of incoming data package
 static uint16_t curveCount = 0;                 // the number of curves/timelines to receive (each stepper one curve)
-
-static String dumpFilename = "/curve";
-static String fileExt = ".dat";
 
 bool initFilesystem() {
   #if defined( ARDUINO_TEENSY41 )
@@ -33,7 +29,7 @@ bool initFilesystem() {
 /* -2 - error while writing file        */
 /* 1 - good                             */
 /* ------------------------------------ */
-int8_t receive_keyframes() {
+int8_t receive_keyframes(String filenames[], uint8_t count) {
 
   // the first two bytes determine the number of _frames_ to receive
   // (number of _bytes_ to receive = number of _frames_ * 2)
@@ -41,15 +37,25 @@ int8_t receive_keyframes() {
   char buf[2];
   Serial.readBytes(buf, 2);
   packageSize = ((buf[1] << 8) + buf[0]) * 2;
-
+  // Serial.print("Package-Size: ");
+  // Serial.println(packageSize);
+  
   // the next two bytes determine the number of curves/timelines to receive
   Serial.readBytes(buf, 2);
   curveCount =  ((buf[1] << 8) + buf[0]);
 
+  if(curveCount != count) {
+    // Error: number of curves not equal to number of timelines
+    return -3; 
+  } 
+  // else {
+  //   Serial.println("CurveCount equals UnitCount.");
+  // }
+
   // receive each curve and store it as a separate file
   for (int i = 0; i < curveCount; i++) {
-    //    lcd.print("receiving curve #");
-    //    lcd.print(i);
+    // Serial.print("Receiving curve #");
+    // Serial.println(i);
 
     // receive data according to the number of frames
     uint32_t index = 0;
@@ -59,30 +65,28 @@ int8_t receive_keyframes() {
         keyframeValuesBin[index] = ch;
         index++;
       }
+      // if(index % 10 == 0) {
+      //   Serial.print(index);
+      //   Serial.print(", ");
+      // }
     }
 
+    // Serial.print("index: ");
+    // Serial.println(index);
+
     if (index == packageSize) {
-      String filename = dumpFilename + String(i) + fileExt;
-      if(!write_keyframes_to_file(filename)) {
-        // Error while writing file
+      // Serial.println("Index == PackageSize");
+
+      if(!write_keyframes_to_file(filenames[i])) {
+        // Error: error while writing file
         return -2;
       }
-    } else {
-      // Error. Didn't receive as many bytes as expected
+    } 
+    else {
+      // Error: Didn't receive as many bytes as expected
       return -1;
     }
   }
-
-  /*
-    lcd.setCursor(6, 2);
-    lcd.print("Bytes received");
-    lcd.setCursor(0, 3);
-    lcd.print(uint8_t(keyframeValuesBin[index - 2]));
-    lcd.setCursor(3, 3);
-    lcd.print(uint8_t(keyframeValuesBin[index - 1]));
-    lcd.setCursor(6, 3);
-    lcd.print("(last Bytes)");
-  */
 
   return 1;
 }
@@ -93,6 +97,7 @@ int8_t receive_keyframes() {
 /* (we don't need sub-directories here) */
 /* ------------------------------------ */
 void listFiles() {
+  Serial.println("list all Files...");
   #if defined(ARDUINO_TEENSY41)
     File root = SD.open("/");
   #elif defined(ARDUINO_ESP32_DEV)
@@ -105,6 +110,7 @@ void listFiles() {
     Serial.println(entry.name());
     entry.close();
   }
+  Serial.println("done.");
 }
 
 
@@ -123,19 +129,17 @@ bool write_keyframes_to_file(String _filename) {
   #endif
 
   if (!file) {
-    //   Serial.println(F("failed to open file for writing"));
+    Serial.println(F("failed to open file for writing"));
     return false;
   }
   for (uint16_t i = 0; i < packageSize; i++) {
     if (!file.write(keyframeValuesBin[i])) {
-      //    Serial.println(F("error while writing keyframeValues to file"));
+      Serial.println(F("error while writing keyframeValues to file"));
       return false;
     }
   }
   file.close();
   return true;
-  //  lcd.setCursor(0, 0);
-  //  lcd.print("> written to file < ");
 }
 
 
@@ -153,15 +157,18 @@ bool read_keyframes_from_file(String _filename, MotorUnit &stepper, uint8_t moto
   #if defined(ARDUINO_TEENSY41)
     File file = SD.open(filename);
   #elif defined(ARDUINO_ESP32_DEV)
-    File file = SPIFFS.open(_filename);
+    File file = SPIFFS.open(_filename, FILE_READ);
   #endif
 
-
-  if (!file) {
-    //Serial.println(F("read_keyframes_from_file: failed to open file for reading"));
+  Serial.print(_filename);
+  Serial.print(F("... "));
+  
+  if (!file || file.isDirectory()) {
+    Serial.println(F("failed to open file for reading."));
     stepper.animationLength = 0;
     return false;
   }
+
   uint16_t index = 0;
   while (file.available()) {
     char byteLow = file.read();
@@ -177,8 +184,7 @@ bool read_keyframes_from_file(String _filename, MotorUnit &stepper, uint8_t moto
   file.close();
   //Serial.println("Starting Animation");
   //Serial.println(stepper[motorIndex].animationLength);
-  Serial.print(F("read file: "));
-  Serial.println(_filename);
+  Serial.println(F("read file."));
   return true;
 }
 
@@ -193,5 +199,6 @@ bool read_all_files(String filenames[], MotorUnit steppers[], uint8_t count) {
   }
   return true;
 }
+
 
 }

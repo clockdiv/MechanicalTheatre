@@ -5,7 +5,7 @@
 #include "Bounce2.h"
 #include "AccelStepper.h"
 
-#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
+#define MAX_FRAMES 3000     // maximum number of frames, used to initialize the keyframeValues-array
 
 class MotorUnit {
   private:
@@ -21,7 +21,6 @@ class MotorUnit {
 
     AccelStepper stepper;
     Bounce endswitch;
-    String motorName;
     states motorState, motorStateOld;
     static String stateStrings[];
     uint8_t pinDir;
@@ -41,7 +40,8 @@ class MotorUnit {
     void printMessage(String msg);
 
   public:
-    static bool tooFast;
+    String motorName;
+    bool tooFast;
     static uint8_t fps;           // frames per second for playback
     uint16_t animationLength;     // number of keyframes. assigned by read_keyframes_from_file()
     uint16_t temp_switchPressedCounter;

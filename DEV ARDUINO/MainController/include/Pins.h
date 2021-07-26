@@ -1,55 +1,59 @@
 #ifndef PINS_H
 #define PINS_H
 
+// Pin Configurations for ESP32 "Main Controller"
 
 // external hardware
 #define PIN_EXT_LED             0
-#define PIN_BUZZER              0
-#define PIN_ENDSWITCH_GLOBAL    0
+#define PIN_BUZZER              23
+#define PIN_ENDSWITCH_GLOBAL    34
+#define PIN_RELAIS_COINSLOT     2
+#define PIN_RELAIS_POWERSUPPLIES 15
 
 
 
-// 
-#define STEPPER_1_ENDSWITCH_PIN 0
-#define STEPPER_1_DIRECTION_PIN 0
-#define STEPPER_1_PULSE_PIN     0
-#define STEPPER_1_IS_INVERTED   0       
 
-#define STEPPER_1_INIT_POS      500
-#define STEPPER_1_RESET_SPEED   1500
+// Vorhang
+#define STEPPER_11_ENDSWITCH_PIN 4
+#define STEPPER_11_DIRECTION_PIN 16
+#define STEPPER_11_PULSE_PIN     17
+#define STEPPER_11_IS_INVERTED   1       // unknown yet
 
-
-
-// 
-#define STEPPER_2_ENDSWITCH_PIN 0
-#define STEPPER_2_DIRECTION_PIN 0
-#define STEPPER_2_PULSE_PIN     0
-#define STEPPER_2_IS_INVERTED   1
-
-#define STEPPER_2_INIT_POS      500
-#define STEPPER_2_RESET_SPEED   1500
+#define STEPPER_11_INIT_POS      500
+#define STEPPER_11_RESET_SPEED   1500
 
 
 
-// 
-#define STEPPER_3_ENDSWITCH_PIN 0
-#define STEPPER_3_DIRECTION_PIN 0
-#define STEPPER_3_PULSE_PIN     0
-#define STEPPER_3_IS_INVERTED   0 
+// Magd
+#define STEPPER_12_ENDSWITCH_PIN 5
+#define STEPPER_12_DIRECTION_PIN 18
+#define STEPPER_12_PULSE_PIN     19
+#define STEPPER_12_IS_INVERTED   1       // unknown yet
 
-#define STEPPER_3_INIT_POS      500
-#define STEPPER_3_RESET_SPEED   1500
+#define STEPPER_12_INIT_POS      20
+#define STEPPER_12_RESET_SPEED   100
 
 
 
-// 
-#define STEPPER_4_ENDSWITCH_PIN 0
-#define STEPPER_4_DIRECTION_PIN 0
-#define STEPPER_4_PULSE_PIN     0
-#define STEPPER_4_IS_INVERTED   1 
+// Out-Of-Order Schild
+#define STEPPER_13_ENDSWITCH_PIN 25
+#define STEPPER_13_DIRECTION_PIN 33
+#define STEPPER_13_PULSE_PIN     32
+#define STEPPER_13_IS_INVERTED   0       // unknown yet 
 
-#define STEPPER_4_INIT_POS      500
-#define STEPPER_4_RESET_SPEED   1500
+#define STEPPER_13_INIT_POS      500
+#define STEPPER_13_RESET_SPEED   500
+
+
+
+// Bühnendrehung
+#define STEPPER_14_ENDSWITCH_PIN 14
+#define STEPPER_14_DIRECTION_PIN 27
+#define STEPPER_14_PULSE_PIN     26
+#define STEPPER_14_IS_INVERTED   0       // unknown yet
+
+#define STEPPER_14_INIT_POS      500
+#define STEPPER_14_RESET_SPEED   500
 
 
 #endif

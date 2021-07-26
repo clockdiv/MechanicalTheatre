@@ -28,6 +28,8 @@
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 
+
+
 #ifndef ARDUINO_TEENSY41
 #error "teensy 4.1 needed for this project."
 #endif
@@ -54,7 +56,7 @@ void __wait_for_motor_init();
 void __idle();
 void __play();
 
-
+uint16_t plotTemp_pos, plotTemp_deltaPos, plotTemp_motorSpeed;
 
 /* ------------------------------------ */
 void setup() {
@@ -72,7 +74,7 @@ void setup() {
   }
 
   // Set i2c communication events  
-  Communication::beginCommunication();
+  // Communication::beginCommunication();
   
   
   // Initialize Motors
@@ -97,6 +99,9 @@ void setup() {
     state = __IDLE;
   }
     
+  // p.Begin();
+  // p.AddTimeGraph("Motor Schwaene tauchen", 250, "Frame", keyframeIndex, "Pos", plotTemp_pos, "Delta", plotTemp_deltaPos, "Speed", plotTemp_motorSpeed);
+
   millisOld = millis();
 }
 
@@ -164,7 +169,7 @@ void __incoming_serial() {
 
       digitalWrite(PIN_EXT_LED, HIGH);
 
-      int8_t receiveError = FileProcess::receive_keyframes();
+      int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
       if (receiveError == -1) {
         // did not receive as many bytes as expected
       } else if (receiveError == -2) {
@@ -249,21 +254,28 @@ void __idle() {
 
 /* ------------------------------------ */
 void __play() {
-  MotorUnit::tooFast = false;
-  if (millisOld + frameDuration < millisCurrent) {
-    for (int i = 0; i < UNIT_COUNT; i++) {
-      steppers[i].moveToFramePosition(keyframeIndex);
-    }
 
-    digitalWrite(PIN_EXT_LED, MotorUnit::tooFast);
+  if (millisCurrent - frameDuration > millisOld) {  
 
     keyframeIndex++;
+
+    for (int i = 0; i < UNIT_COUNT; i++) {
+      steppers[i].moveToFramePosition(keyframeIndex);
+      if(steppers[i].tooFast) {
+        Serial.print("too fast: ");
+        Serial.print(keyframeIndex);
+        Serial.print(" Motor: ");
+        Serial.println(steppers[i].motorName);
+      }
+    }
+
 
     if (keyframeIndex == steppers[0].animationLength - 1) {
       buzzer_beep(1, 200);
 
       state = __RESET;
     }
+
 
     millisOld = millisCurrent;
   }

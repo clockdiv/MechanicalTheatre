@@ -11,7 +11,7 @@
 
 #include "MotorUnit.h"
 
-#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
+#define MAX_FRAMES 3000     // maximum number of frames, used to initialize the keyframeValues-array
 
 namespace FileProcess {
 
@@ -26,7 +26,7 @@ bool initFilesystem();
 /* from Serial and stores them into a   */
 /* char array.                          */
 /* ------------------------------------ */
-int8_t receive_keyframes();
+int8_t receive_keyframes(String filenames[], uint8_t count);
 
 /* ------------------------------------ */
 /* lists all files in root directory    */
