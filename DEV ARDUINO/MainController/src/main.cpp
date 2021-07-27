@@ -19,6 +19,7 @@
 #endif
 
 #include <Arduino.h>
+#include <Wire.h>
 
 // local includes
 #include "Configurations.h"
@@ -26,9 +27,10 @@
 #include "StateMachine.h"
 
 // cross-project includes
-#include "Communication.h"
+//#include "Communication.h"
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
+//#include "ShowController.h"
 
 
 
@@ -40,6 +42,7 @@ MotorUnit steppers[UNIT_COUNT];
 
 // timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
+long millisIdle = 0;
 long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
 uint16_t timesPlayed = 0;
@@ -52,12 +55,40 @@ void smRun();
 void __incoming_serial();
 void __reset();
 void __wait_for_motor_init();
+void __wait_for_teensy();
 void __idle();
+void __setPlayState();
 void __play();
+
 void serialEvent();
 void powerSuppliesOn();
 void powerSuppliesOff();
 
+
+// i2c Communication functions
+void initController() {
+  Wire.begin();
+}
+
+bool requestStateFromTeensy() {
+  // checks if the teensy is in idle mode an is ready to play the show
+  buzzer_beep(1, 50);
+
+  Wire.requestFrom(TEENSY_I2C_ADDR, 1);
+  while(Wire.available()) {
+    int c = Wire.read();
+    if (c == 1) {  return true; } 
+    else { break; }
+  }
+  return false;
+}
+
+void sendStartCommandToTeensy() {
+  // send '1' to teensy to tell it to start
+  Wire.beginTransmission(TEENSY_I2C_ADDR);
+  Wire.write(1);
+  Wire.endTransmission();
+}
 
 /* ------------------------------------ */
 void setup() {
@@ -67,7 +98,7 @@ void setup() {
   pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
 
-  powerSuppliesOff();
+  //powerSuppliesOff();
   digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
 
   buzzer_beep();
@@ -81,12 +112,11 @@ void setup() {
     while(true);
   }
 
-  FileProcess::listFiles();
-
   // Set i2c communication events  
-  //Communication::beginCommunication();
-  
-  
+  //Communication::initController();
+  initController();
+
+
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++) {
     steppers[i].initDriver(motornames[i], 
@@ -124,7 +154,7 @@ void loop() {
     if (state == __INCOMING_SERIAL || state == __IDLE || state == __UNDEFINED) {
       powerSuppliesOff();
     } 
-    else if (state == __RESET || state == __WAIT_FOR_MOTOR_INIT || state == __PLAY) {
+    else if (state == __RESET || state == __WAIT_FOR_MOTOR_INIT || state == __WAIT_FOR_TEENSY || state == __PLAY) {
       powerSuppliesOn();
     }
 
@@ -154,6 +184,10 @@ void smRun() {
     
     case __WAIT_FOR_MOTOR_INIT:
       __wait_for_motor_init();
+      break;
+      
+    case __WAIT_FOR_TEENSY:
+      __wait_for_teensy();
       break;
       
     case __IDLE:
@@ -224,7 +258,7 @@ void __incoming_serial() {
        for (int i = 0; i < UNIT_COUNT; i++) {
         steppers[i].setPlay();
        }
-      state = __PLAY;
+       __setPlayState();
     }
   }   
   else {
@@ -234,6 +268,17 @@ void __incoming_serial() {
 }
 
 
+/* ------------------------------------ */
+void __reset() {
+  keyframeIndex = 0;
+
+  Serial.println(F("reseting all motors..."));
+  for (int i = 0; i < UNIT_COUNT; i++) {
+    steppers[i].setReset();
+  }
+
+  state = __WAIT_FOR_MOTOR_INIT;
+}
 
 
 /* ------------------------------------ */
@@ -251,9 +296,19 @@ void __wait_for_motor_init() {
   }
 
   if (allResetted) {  // if all motor units have resetted their position...
-    state = __IDLE;
+    state = __WAIT_FOR_TEENSY;
   }
+}
 
+/* ------------------------------------ */
+void __wait_for_teensy() {
+    // block while teensy is not ready yet. always wait for your little sibling!
+    while( !requestStateFromTeensy() ) {
+      delay(1000);
+    }
+
+    millisIdle = millis();
+    state = __IDLE;
 }
 
 
@@ -263,12 +318,12 @@ void __idle() {
     steppers[i].update();
   }
 
-  if(repeatShow) {
+  if(repeatShow && (millis() - millisIdle > 10000)) {
     for (int i = 0; i < UNIT_COUNT; i++) {
       steppers[i].setPlay();
     }
-    delay(5000);
-    state = __PLAY;
+    
+    __setPlayState();
   }
 }
 
@@ -290,11 +345,9 @@ void __play() {
       }
     }
 
-
-
+    // if animation finished...
     if (keyframeIndex == steppers[0].animationLength - 1) {
-      buzzer_beep(1, 200);
-      
+      buzzer_beep(1, 200);      
       state = __RESET;
     }
 
@@ -310,12 +363,21 @@ void __play() {
 /* ------------------------------------ */
 void powerSuppliesOn() {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
-  delay(1000);
+  //delay(1000);
 }
 
 
 /* ------------------------------------ */
 void powerSuppliesOff() {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
-  delay(500);
+  //delay(500);
+}
+
+void __setPlayState() {
+  powerSuppliesOn();
+  delay(1000);
+
+  sendStartCommandToTeensy();
+  buzzer_beep(4, 200);
+  state = __PLAY;
 }

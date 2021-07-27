@@ -17,6 +17,8 @@
 
 
 #include <Arduino.h>
+#include "i2c_driver.h"
+#include "i2c_driver_wire.h"
 
 // local includes
 #include "Configurations10.h"
@@ -58,6 +60,45 @@ void __play();
 
 uint16_t plotTemp_pos, plotTemp_deltaPos, plotTemp_motorSpeed;
 
+
+// i2c Communication functions
+void respondToRequest() {
+  Serial.print("incoming request, current state: ");
+  Serial.println(stateStrings[state]);
+  if(state == __IDLE) {
+    Serial.println("sending okay to esp32");
+    Wire.write(1);
+  } else {
+    Wire.write(0);
+  }
+}
+
+void receiveEvent(int byteCount) {
+  while(Wire.available()) {
+    char c = Wire.read();
+    Serial.println(c);
+    if (c == 1 && state == __IDLE) {
+        for (int i = 0; i < UNIT_COUNT; i++) {
+          steppers[i].setPlay();
+        }
+        buzzer_beep(4, 200);
+        Serial.println("playyyyyyy!!!");
+        state = __PLAY;
+    }
+    else {
+        buzzer_beep(7, 200);
+    }
+  }
+}
+
+void initPeripheral() {
+  Wire.begin(TEENSY_I2C_ADDR);
+  Wire.onRequest(respondToRequest);
+  Wire.onReceive(receiveEvent);
+}
+
+
+
 /* ------------------------------------ */
 void setup() {
   pinMode(PIN_EXT_LED, OUTPUT);
@@ -74,8 +115,8 @@ void setup() {
   }
 
   // Set i2c communication events  
-  // Communication::beginCommunication();
-  
+  // Communication::initPeripheral();
+  initPeripheral();
   
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++) {
@@ -241,13 +282,6 @@ void __wait_for_motor_init() {
 void __idle() {
   for (int i = 0; i < UNIT_COUNT; i++) {
     steppers[i].update();
-  }
-
-  if(repeatShow) {
-    for (int i = 0; i < UNIT_COUNT; i++) {
-      steppers[i].setPlay();
-    }
-    state = __PLAY;
   }
 }
 

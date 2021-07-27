@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include "Pins.h"
 
+#define TEENSY_I2C_ADDR 0x10
+
 // Number of stepper motors
 #define UNIT_COUNT 10                
 

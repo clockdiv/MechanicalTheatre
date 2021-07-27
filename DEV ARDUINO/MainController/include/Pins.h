@@ -30,7 +30,7 @@
 #define STEPPER_12_PULSE_PIN     19
 #define STEPPER_12_IS_INVERTED   1       // unknown yet
 
-#define STEPPER_12_INIT_POS      20
+#define STEPPER_12_INIT_POS      30         // 20 was good until we switch the power supply off?
 #define STEPPER_12_RESET_SPEED   100
 
 

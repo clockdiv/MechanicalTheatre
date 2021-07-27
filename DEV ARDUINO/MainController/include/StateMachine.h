@@ -5,6 +5,7 @@ enum states {
   __INCOMING_SERIAL,
   __RESET,
   __WAIT_FOR_MOTOR_INIT,
+  __WAIT_FOR_TEENSY,
   __IDLE,
   __PLAY,
   __UNDEFINED
@@ -15,6 +16,7 @@ static String stateStrings[] = {
   "INCOMING SERIAL",
   "RESET",
   "WAIT FOR MOTOR INIT",
+  "WAIT FOR TEENSY",
   "IDLE",
   "PLAY",
   "UNDEFINED"
