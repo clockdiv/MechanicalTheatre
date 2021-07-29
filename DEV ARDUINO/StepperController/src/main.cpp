@@ -14,7 +14,9 @@
      ...and stores it in exact the same way as binary data into a file on the SD-Card or the SPI Flash File System.
 */
 
-
+#ifndef ARDUINO_TEENSY41
+#error "teensy 4.1 needed for this project."
+#endif
 
 #include <Arduino.h>
 #include "i2c_driver.h"
@@ -24,22 +26,22 @@
 #include "Configurations10.h"
 #include "CommonFunctions.h"
 #include "StateMachine.h"
+#include "i2cHandler.h"
 
 // cross-project includes
-#include "Communication.h"
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 
 
 
-#ifndef ARDUINO_TEENSY41
-#error "teensy 4.1 needed for this project."
-#endif
 
 bool repeatShow = true;
 
 // motor units
 MotorUnit steppers[UNIT_COUNT];
+
+// communication
+i2cHandler i2chandler;
 
 // timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
@@ -52,50 +54,13 @@ states stateOld;
 
 // function declarations
 void smRun();
+void stateEnter();
+void stateExit();
 void __incoming_serial();
 void __reset();
 void __wait_for_motor_init();
 void __idle();
 void __play();
-
-uint16_t plotTemp_pos, plotTemp_deltaPos, plotTemp_motorSpeed;
-
-
-// i2c Communication functions
-void respondToRequest() {
-  Serial.print("incoming request, current state: ");
-  Serial.println(stateStrings[state]);
-  if(state == __IDLE) {
-    Serial.println("sending okay to esp32");
-    Wire.write(1);
-  } else {
-    Wire.write(0);
-  }
-}
-
-void receiveEvent(int byteCount) {
-  while(Wire.available()) {
-    char c = Wire.read();
-    Serial.println(c);
-    if (c == 1 && state == __IDLE) {
-        for (int i = 0; i < UNIT_COUNT; i++) {
-          steppers[i].setPlay();
-        }
-        buzzer_beep(4, 200);
-        Serial.println("playyyyyyy!!!");
-        state = __PLAY;
-    }
-    else {
-        buzzer_beep(7, 200);
-    }
-  }
-}
-
-void initPeripheral() {
-  Wire.begin(TEENSY_I2C_ADDR);
-  Wire.onRequest(respondToRequest);
-  Wire.onReceive(receiveEvent);
-}
 
 
 
@@ -103,6 +68,7 @@ void initPeripheral() {
 void setup() {
   pinMode(PIN_EXT_LED, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
+
   buzzer_beep();
 
   Serial.begin(115200);
@@ -114,10 +80,10 @@ void setup() {
     while(true);
   }
 
-  // Set i2c communication events  
-  // Communication::initPeripheral();
-  initPeripheral();
+  // Initialize i2c communication
+  i2chandler.initI2C(&state);
   
+
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++) {
     steppers[i].initDriver(motornames[i], 
@@ -140,8 +106,6 @@ void setup() {
     state = __IDLE;
   }
     
-  // p.Begin();
-  // p.AddTimeGraph("Motor Schwaene tauchen", 250, "Frame", keyframeIndex, "Pos", plotTemp_pos, "Delta", plotTemp_deltaPos, "Speed", plotTemp_motorSpeed);
 
   millisOld = millis();
 }
@@ -152,10 +116,36 @@ void loop() {
   if (state != stateOld) {
     Serial.print(F("state:\t\t"));
     Serial.println(stateStrings[state]);
+
+    stateExit();
+    stateEnter();
   }
   millisCurrent = millis();
 
   smRun();
+}
+
+
+/* ------------------------------------ */
+void stateEnter() {
+  switch(state) {
+    case __PLAY:
+        for (int i = 0; i < UNIT_COUNT; i++) {
+          steppers[i].setPlay();
+        }
+    break;
+    default:
+    break;
+  }
+}
+
+
+/* ------------------------------------ */
+void stateExit() {
+  switch (stateOld) {
+    default:
+    break;
+  }
 }
 
 
@@ -295,12 +285,12 @@ void __play() {
 
     for (int i = 0; i < UNIT_COUNT; i++) {
       steppers[i].moveToFramePosition(keyframeIndex);
-      if(steppers[i].tooFast) {
-        Serial.print("too fast: ");
-        Serial.print(keyframeIndex);
-        Serial.print(" Motor: ");
-        Serial.println(steppers[i].motorName);
-      }
+      // if(steppers[i].tooFast) {
+      //   Serial.print("too fast: ");
+      //   Serial.print(keyframeIndex);
+      //   Serial.print(" Motor: ");
+      //   Serial.println(steppers[i].motorName);
+      // }
     }
 
 

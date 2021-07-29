@@ -3,8 +3,6 @@
 #include <Arduino.h>
 #include "Pins.h"
 
-#define TEENSY_I2C_ADDR 0x10
-
 // Number of stepper motors
 #define UNIT_COUNT 10                
 
@@ -27,8 +25,8 @@ String motornames[UNIT_COUNT] = {   "Ufo_X-Axis",
                                     "Pferde_2",
                                     "Reiter_1", 
                                     "Reiter_2",
-                                    "Vorhang", 
-                                    "Magd" };
+                                    "Luftpumpe", 
+                                    "Halbkugel" };
 
 const uint8_t steppersPinConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
   {STEPPER_1_ENDSWITCH_PIN,  STEPPER_1_DIRECTION_PIN,  STEPPER_1_PULSE_PIN,  STEPPER_1_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert

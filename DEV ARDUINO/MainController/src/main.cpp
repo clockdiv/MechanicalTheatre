@@ -20,14 +20,15 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include "Bounce2.h"
 
 // local includes
 #include "Configurations.h"
 #include "CommonFunctions.h"
 #include "StateMachine.h"
+#include "i2cHandler.h"
 
 // cross-project includes
-//#include "Communication.h"
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 //#include "ShowController.h"
@@ -35,16 +36,23 @@
 
 
 
-bool repeatShow = true;
+
+const bool repeatShow = true;
 
 // motor units
 MotorUnit steppers[UNIT_COUNT];
 
+// communication
+i2cHandler i2chandler;
+
+// coin slot
+Bounce coinSlotSensor;
+
 // timing
-long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
+long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
 long millisIdle = 0;
 long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
-uint16_t keyframeIndex = 0;             // current position of the timeline, used for playback
+uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
 uint16_t timesPlayed = 0;
 
 states state;
@@ -52,53 +60,33 @@ states stateOld;
 
 // function declarations
 void smRun();
+void stateEnter();
+void stateExit();
 void __incoming_serial();
 void __reset();
 void __wait_for_motor_init();
 void __wait_for_teensy();
 void __idle();
-void __setPlayState();
 void __play();
 
 void serialEvent();
 void powerSuppliesOn();
 void powerSuppliesOff();
+void LEDWallStart();
+void LEDWallStop();
 
-
-// i2c Communication functions
-void initController() {
-  Wire.begin();
-}
-
-bool requestStateFromTeensy() {
-  // checks if the teensy is in idle mode an is ready to play the show
-  buzzer_beep(1, 50);
-
-  Wire.requestFrom(TEENSY_I2C_ADDR, 1);
-  while(Wire.available()) {
-    int c = Wire.read();
-    if (c == 1) {  return true; } 
-    else { break; }
-  }
-  return false;
-}
-
-void sendStartCommandToTeensy() {
-  // send '1' to teensy to tell it to start
-  Wire.beginTransmission(TEENSY_I2C_ADDR);
-  Wire.write(1);
-  Wire.endTransmission();
-}
 
 /* ------------------------------------ */
-void setup() {
+void setup()
+{
   pinMode(PIN_EXT_LED, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
+  pinMode(PIN_LEDWALL_TRIGGER, OUTPUT);
 
   pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
 
-  //powerSuppliesOff();
+  LEDWallStop();
   digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
 
   buzzer_beep();
@@ -107,133 +95,221 @@ void setup() {
   Serial.println(F("hello magdeburg!"));
 
   // Initialize SD-Card
-  if(!FileProcess::initFilesystem()) {
+  if (!FileProcess::initFilesystem())
+  {
     Serial.println(F("Initialization of FileSystem failed!"));
-    while(true);
+    while (true)
+      ;
   }
 
-  // Set i2c communication events  
-  //Communication::initController();
-  initController();
+  // Initialize i2c communication
+  i2chandler.initI2C();
 
+  // Connect Coin-Sensor
+  coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT);
+  coinSlotSensor.interval(25);
 
   // Initialize Motors
-  for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].initDriver(motornames[i], 
-                          steppersPinConfig[i][0], 
-                          steppersPinConfig[i][1], 
-                          steppersPinConfig[i][2], 
-                          steppersPinConfig[i][3],
-                          steppersInitConfig[i][0],
-                          steppersInitConfig[i][1]);
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
+    steppers[i].initDriver(motornames[i],
+                           steppersPinConfig[i][0],
+                           steppersPinConfig[i][1],
+                           steppersPinConfig[i][2],
+                           steppersPinConfig[i][3],
+                           steppersInitConfig[i][0],
+                           steppersInitConfig[i][1]);
   }
 
   state = __RESET;
   stateOld = __UNDEFINED;
 
-
   // read all files and store curves in MotorUnits (stepper[])
-  if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT)) {
+  if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT))
+  {
     Serial.println(F("error while reading files during startup"));
-    //buzzer_beep(1, 2000);
-    repeatShow = false;
-    state = __IDLE;
+    state = __UNDEFINED;
   }
-    
+
   millisOld = millis();
 }
 
-
 /* ------------------------------------ */
-void loop() {
-  if (state != stateOld) {
+void loop()
+{
+  if (state != stateOld)
+  {
     Serial.print(F("state:\t\t"));
     Serial.println(stateStrings[state]);
 
-    // turn on/off power supplies
-    if (state == __INCOMING_SERIAL || state == __IDLE || state == __UNDEFINED) {
-      powerSuppliesOff();
-    } 
-    else if (state == __RESET || state == __WAIT_FOR_MOTOR_INIT || state == __WAIT_FOR_TEENSY || state == __PLAY) {
-      powerSuppliesOn();
-    }
-
+    stateExit();
+    stateEnter();
   }
   millisCurrent = millis();
 
-  if (Serial.available() >= 1) {
+  if (Serial.available() >= 1)
+  {
     serialEvent();
   }
 
   smRun();
 }
 
-
 /* ------------------------------------ */
-void smRun() {
-  stateOld = state; 
-  
-  switch (state) {
-    case __INCOMING_SERIAL:
-      __incoming_serial();
-      break;
-            
-    case __RESET:
-      __reset();
-      break;
-    
-    case __WAIT_FOR_MOTOR_INIT:
-      __wait_for_motor_init();
-      break;
-      
-    case __WAIT_FOR_TEENSY:
-      __wait_for_teensy();
-      break;
-      
-    case __IDLE:
-      __idle();
-      break;
-      
-    case __PLAY:
-      __play();
-      break;
-    
-    case __UNDEFINED:
-      break;
+void stateEnter()
+{
+  switch (state)
+  {
+  case __INCOMING_SERIAL:
+    LEDWallStop();
+    powerSuppliesOff();
+    break;
+  case __RESET:
+    LEDWallStop();
+    powerSuppliesOn();
+    break;
+  case __WAIT_FOR_MOTOR_INIT:
+    powerSuppliesOn();
+    break;
+  case __WAIT_FOR_TEENSY:
+    powerSuppliesOn();
+    break;
+  case __IDLE:
+    powerSuppliesOff();
+    millisIdle = millis();
+    break;
+  case __PLAY:
+    powerSuppliesOn();
+    buzzer_beep(4, 200);
 
-    default:
-      break;
+    for (int i = 0; i < UNIT_COUNT; i++)
+    {
+      steppers[i].setPlay();
+    }
+
+    while (!i2chandler.requestStart())
+    {
+      delay(1000);
+    };
+    LEDWallStart();
+    break;
+
+  case __UNDEFINED:
+    powerSuppliesOff();
+    break;
+
+  default:
+    break;
   }
 }
 
+/* ------------------------------------ */
+void stateExit()
+{
+  switch (stateOld)
+  {
+  case __INCOMING_SERIAL:
+    break;
+
+  case __RESET:
+    break;
+
+  case __WAIT_FOR_MOTOR_INIT:
+    break;
+
+  case __WAIT_FOR_TEENSY:
+    break;
+
+  case __IDLE:
+    break;
+
+  case __PLAY:
+    break;
+
+  case __UNDEFINED:
+    break;
+
+  default:
+    break;
+  }
+}
 
 /* ------------------------------------ */
-void serialEvent() {
+void smRun()
+{
+  stateOld = state;
+
+  switch (state)
+  {
+  case __INCOMING_SERIAL:
+    __incoming_serial();
+    break;
+
+  case __RESET:
+    __reset();
+    break;
+
+  case __WAIT_FOR_MOTOR_INIT:
+    __wait_for_motor_init();
+    break;
+
+  case __WAIT_FOR_TEENSY:
+    __wait_for_teensy();
+    break;
+
+  case __IDLE:
+    __idle();
+    break;
+
+  case __PLAY:
+    __play();
+    break;
+
+  case __UNDEFINED:
+    break;
+
+  default:
+    break;
+  }
+}
+
+/* ------------------------------------ */
+void serialEvent()
+{
   state = __INCOMING_SERIAL;
 }
 
-
 /* ------------------------------------ */
-void __incoming_serial() {
-  if (Serial.available() >= 1) {
+void __incoming_serial()
+{
+  if (Serial.available() >= 1)
+  {
     Serial.println("incoming serial");
 
     char inChar = (char)Serial.read();
-    if (inChar == 'u') {
+    if (inChar == 'u')
+    {
       buzzer_beep(1, 100);
       digitalWrite(PIN_EXT_LED, HIGH);
 
       int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
-      if (receiveError == -1) {
+      if (receiveError == -1)
+      {
         // Error: Didn't receive as many bytes as expected
         buzzer_beep(1, 1000);
-      } else if (receiveError == -2) {
+      }
+      else if (receiveError == -2)
+      {
         // Error: error while writing file
         buzzer_beep(2, 1000);
-      } else if (receiveError == -3) {
+      }
+      else if (receiveError == -3)
+      {
         // Error: number of curves not equal to number of timelines
         buzzer_beep(3, 1000);
-      } else if (receiveError == 1) {
+      }
+      else if (receiveError == 1)
+      {
         // No Error:
         digitalWrite(PIN_EXT_LED, LOW);
         buzzer_beep(2, 100);
@@ -250,94 +326,97 @@ void __incoming_serial() {
       state = __RESET;
       delay(200);
     }
-    else if (inChar == 'r') {
+    else if (inChar == 'r')
+    {
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
       state = __RESET;
     }
-    else if (inChar == 'p') {
-       for (int i = 0; i < UNIT_COUNT; i++) {
-        steppers[i].setPlay();
-       }
-       __setPlayState();
+    else if (inChar == 'p')
+    {
+      state = __PLAY;
     }
-  }   
-  else {
+  }
+  else
+  {
     Serial.print("idle after incoming serial");
     state = __IDLE;
   }
 }
 
-
 /* ------------------------------------ */
-void __reset() {
+void __reset()
+{
   keyframeIndex = 0;
 
   Serial.println(F("reseting all motors..."));
-  for (int i = 0; i < UNIT_COUNT; i++) {
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
     steppers[i].setReset();
   }
 
   state = __WAIT_FOR_MOTOR_INIT;
 }
 
-
 /* ------------------------------------ */
-void __wait_for_motor_init() {
-  for (int i = 0; i < UNIT_COUNT; i++) {
+void __wait_for_motor_init()
+{
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
     steppers[i].update();
   }
 
   bool allResetted = true;
 
-  for (int i = 0; i < UNIT_COUNT; i++) {
-    if(!steppers[i].isIdle()) {
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
+    if (!steppers[i].isIdle())
+    {
       allResetted = false;
     }
   }
 
-  if (allResetted) {  // if all motor units have resetted their position...
+  if (allResetted)
+  { // if all motor units have resetted their position...
     state = __WAIT_FOR_TEENSY;
   }
 }
 
 /* ------------------------------------ */
-void __wait_for_teensy() {
-    // block while teensy is not ready yet. always wait for your little sibling!
-    while( !requestStateFromTeensy() ) {
-      delay(1000);
-    }
-
-    millisIdle = millis();
-    state = __IDLE;
-}
-
-
-/* ------------------------------------ */
-void __idle() {
-  for (int i = 0; i < UNIT_COUNT; i++) {
-    steppers[i].update();
+void __wait_for_teensy()
+{
+  // block while teensy is not ready yet. always wait for your little sibling!
+  while (!i2chandler.requestIdleState())
+  {
+    delay(1000);
   }
 
-  if(repeatShow && (millis() - millisIdle > 10000)) {
-    for (int i = 0; i < UNIT_COUNT; i++) {
-      steppers[i].setPlay();
-    }
-    
-    __setPlayState();
+  state = __IDLE;
+}
+
+/* ------------------------------------ */
+void __idle()
+{
+  coinSlotSensor.update();
+  if (coinSlotSensor.fallingEdge() || (repeatShow && (millis() - millisIdle > 1000)))
+  {
+    state = __PLAY;
   }
 }
 
-
 /* ------------------------------------ */
-void __play() {
+void __play()
+{
 
-  if (millisCurrent - frameDuration > millisOld) {  
+  if (millisCurrent - frameDuration > millisOld)
+  {
 
     keyframeIndex++;
 
-    for (int i = 0; i < UNIT_COUNT; i++) {
+    for (int i = 0; i < UNIT_COUNT; i++)
+    {
       steppers[i].moveToFramePosition(keyframeIndex);
-      if(steppers[i].tooFast) {
+      if (steppers[i].tooFast)
+      {
         Serial.print("too fast: ");
         Serial.print(keyframeIndex);
         Serial.print(" Motor: ");
@@ -346,38 +425,43 @@ void __play() {
     }
 
     // if animation finished...
-    if (keyframeIndex == steppers[0].animationLength - 1) {
-      buzzer_beep(1, 200);      
+    if (keyframeIndex == steppers[0].animationLength - 1)
+    {
+      buzzer_beep(1, 200);
       state = __RESET;
     }
 
     millisOld = millisCurrent;
   }
 
-  for (int i = 0; i < UNIT_COUNT; i++) {
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
     steppers[i].update();
   }
 }
 
-
 /* ------------------------------------ */
-void powerSuppliesOn() {
+void powerSuppliesOn()
+{
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
-  //delay(1000);
+  delay(1000);
 }
-
 
 /* ------------------------------------ */
-void powerSuppliesOff() {
+void powerSuppliesOff()
+{
+  return;
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
-  //delay(500);
+  delay(1000);
 }
 
-void __setPlayState() {
-  powerSuppliesOn();
-  delay(1000);
+/* ------------------------------------ */
+void LEDWallStart() {
+  digitalWrite(PIN_LEDWALL_TRIGGER, HIGH);
+}
 
-  sendStartCommandToTeensy();
-  buzzer_beep(4, 200);
-  state = __PLAY;
+/* ------------------------------------ */
+void LEDWallStop() {
+  return;
+  digitalWrite(PIN_LEDWALL_TRIGGER, LOW);
 }

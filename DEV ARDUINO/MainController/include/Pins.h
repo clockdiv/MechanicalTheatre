@@ -7,8 +7,10 @@
 #define PIN_EXT_LED             0
 #define PIN_BUZZER              23
 #define PIN_ENDSWITCH_GLOBAL    34
+#define PIN_COINSLOT_SENSOR     35
 #define PIN_RELAIS_COINSLOT     2
 #define PIN_RELAIS_POWERSUPPLIES 15
+#define PIN_LEDWALL_TRIGGER 13
 
 
 
