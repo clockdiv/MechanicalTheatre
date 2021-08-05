@@ -306,7 +306,7 @@ F 3 "" H 5450 4500 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J?
+L Clockdiv-KiCad-library:RJ45x8 J?
 U 2 1 61291D8E
 P 7150 3850
 AR Path="/6111FD42/61291D8E" Ref="J?"  Part="1" 

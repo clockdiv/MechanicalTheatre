@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J?
+L Clockdiv-KiCad-library:RJ45x8 J?
 U 4 1 60F1A87D
 P 7050 4000
 AR Path="/6111FD42/60F1A87D" Ref="J?"  Part="1" 

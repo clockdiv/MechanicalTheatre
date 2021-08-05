@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L MechanicalTheatre-rescue:RJ45x8-Clockdiv-KiCad-library J?
+L Clockdiv-KiCad-library:RJ45x8 J?
 U 7 1 60D803B6
 P 7450 3850
 AR Path="/6111FD42/60D803B6" Ref="J?"  Part="1" 
@@ -249,20 +249,7 @@ F 3 "" H 5000 2900 50  0001 C CNN
 	1    5000 2900
 	0    1    1    0   
 $EndComp
-$Comp
-L power:+5V #PWR?
-U 1 1 60D80426
-P 5250 2750
-AR Path="/6111FD42/60D80426" Ref="#PWR?"  Part="1" 
-AR Path="/60D6E535/60D80426" Ref="#PWR0107"  Part="1" 
-F 0 "#PWR0107" H 5250 2600 50  0001 C CNN
-F 1 "+5V" H 5050 2800 50  0000 L CNN
-F 2 "" H 5250 2750 50  0001 C CNN
-F 3 "" H 5250 2750 50  0001 C CNN
-	1    5250 2750
-	1    0    0    -1  
-$EndComp
-Text Label 3800 2500 0    200  ~ 0
+Text Label 3800 1950 0    200  ~ 0
 STEPPER_MOTOR_CONNECTION_7
 Text Notes 7000 3300 2    50   ~ 0
 DIR
@@ -381,4 +368,53 @@ Text HLabel 4650 4250 0    50   Output ~ 0
 END_ALL
 Wire Wire Line
 	4650 4250 6500 4250
+$Comp
+L power:+5V #PWR?
+U 1 1 6256F91A
+P 5250 2350
+AR Path="/6111FD42/6256F91A" Ref="#PWR?"  Part="1" 
+AR Path="/611E3121/6256F91A" Ref="#PWR?"  Part="1" 
+AR Path="/60D6E535/6256F91A" Ref="#PWR0143"  Part="1" 
+F 0 "#PWR0143" H 5250 2200 50  0001 C CNN
+F 1 "+5V" H 5050 2400 50  0000 L CNN
+F 2 "" H 5250 2350 50  0001 C CNN
+F 3 "" H 5250 2350 50  0001 C CNN
+	1    5250 2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6256F920
+P 4750 2600
+AR Path="/6111FD42/6256F920" Ref="#PWR?"  Part="1" 
+AR Path="/60D6E535/6256F920" Ref="#PWR0125"  Part="1" 
+F 0 "#PWR0125" H 4750 2350 50  0001 C CNN
+F 1 "GND" V 4750 2500 50  0000 R CNN
+F 2 "" H 4750 2600 50  0001 C CNN
+F 3 "" H 4750 2600 50  0001 C CNN
+	1    4750 2600
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4750 2600 4950 2600
+$Comp
+L Device:C C?
+U 1 1 6256F928
+P 5100 2600
+AR Path="/6111FD42/6256F928" Ref="C?"  Part="1" 
+AR Path="/611E3121/6256F928" Ref="C?"  Part="1" 
+AR Path="/60D6E535/6256F928" Ref="C28"  Part="1" 
+F 0 "C28" V 5050 2650 50  0000 L CNN
+F 1 "0.1uF 16V " V 5200 2400 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder" H 5138 2450 50  0001 C CNN
+F 3 "~" H 5100 2600 50  0001 C CNN
+F 4 "place near SN74AHCT125N" V 5200 1900 50  0000 C CNN "Comment"
+	1    5100 2600
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	5250 2350 5250 2600
+Wire Wire Line
+	5250 2600 5250 2750
+Connection ~ 5250 2600
 $EndSCHEMATC

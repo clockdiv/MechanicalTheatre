@@ -1,4 +1,4 @@
-19873676981781708
+19878565013278090
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -2140,6 +2140,13 @@ SW PUSH SMALL http://www.ckswitches.com/media/1457/ksa_ksl.pdf
 SW PUSH SMALL Tactile C&K
 0
 4
+2
+Buzzer_Beeper
+Buzzer_12x9.5RM6.5
+Generic Buzzer, D12mm height 9.5mm with RM7.6mm
+buzzer
+0
+2
 2
 Buzzer_Beeper
 Buzzer_12x9.5RM7.6
@@ -56321,6 +56328,13 @@ Yellow 5381 Series LED
 0
 2
 2
+MechanicalTheatre
+Silkscreen
+
+
+0
+0
+0
 Module
 A20_OLINUXINO_LIME2
 A20 Olinuxino LIME2, 1.2GHz, 512-1024MB RAM, Micro-SD, NAND or eMMC, 1000Mbit Ethernet
@@ -59807,6 +59821,13 @@ DIL DIP PDIP 2.54mm 7.62mm 300mil
 0
 4
 4
+PQG3FST112
+SWITCHCRAFT_PQG3FST112
+
+
+0
+6
+6
 Package_BGA
 Analog_BGA-28_4.0x6.25mm_Layout4x7_P0.8mm_Ball0.45mm_Pad0.4
 Analog BGA-28 4.0mm x 6.25mm package, pitch 0.4mm pad, based on https://www.analog.com/media/en/technical-documentation/data-sheets/8063fa.pdf

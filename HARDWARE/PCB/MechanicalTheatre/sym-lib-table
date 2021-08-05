@@ -1,4 +1,5 @@
 (sym_lib_table
   (lib (name ESP32-DEVKITC-32D)(type Legacy)(uri /Users/julian/Nextcloud/KiCad/Lib/ESP32-DEVKITC-32D/ESP32-DEVKITC-32D.lib)(options "")(descr ""))
-  (lib (name MechanicalTheatre-rescue)(type Legacy)(uri ${KIPRJMOD}/MechanicalTheatre-rescue.lib)(options "")(descr ""))
+  (lib (name MechanicalTheatre-rescue)(type Legacy)(uri ${KIPRJMOD}/MechanicalTheatre-rescue.lib)(options "")(descr "")(disabled))
+  (lib (name Clockdiv-KiCad-library)(type Legacy)(uri /Users/julian/Nextcloud/KiCad/Lib/Clockdiv-KiCad-library.lib)(options "")(descr ""))
 )
