@@ -20,6 +20,9 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include "UniversalTelegramBot.h"
 #include "Bounce2.h"
 
 // local includes
@@ -32,31 +35,38 @@
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 //#include "ShowController.h"
+#include "pw.h"
 
-
-
-
-
-const bool repeatShow = true;
+const unsigned long messageScanInterval = 1000; // mean time between scan messages
+WiFiClientSecure secured_client;
+UniversalTelegramBot bot(BOT_TOKEN, secured_client);
+unsigned long bot_lasttime = 0;   // last time messages' scan has been done
+unsigned long wifiTimeout = 3000; // timeout for establishing WiFi connection
+String chat_id = GROUP_ID;
+String telegramMessage_tmp = "";
 
 // motor units
 MotorUnit steppers[UNIT_COUNT];
 
-// communication
+// communication between microcontrollers
 i2cHandler i2chandler;
 
 // coin slot
 Bounce coinSlotSensor;
 
 // timing
-long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
-long millisIdle = 0;
-long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
+unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
+unsigned long millisIdle = 0;
+unsigned long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
 uint16_t timesPlayed = 0;
 
 states state;
 states stateOld;
+
+bool repeatShow = false;
+bool startFromTelegram = false;
+uint16_t showCounter = 0;
 
 // function declarations
 void smRun();
@@ -75,6 +85,13 @@ void powerSuppliesOff();
 void LEDWallStart();
 void LEDWallStop();
 
+void initWiFiAndTelegram();
+void checkTelegramBot();
+void handleNewTelegramMessages(int numNewMessages);
+void sendTelegramMessage(String _message);
+// void WiFiStationConnected(WiFiEvent_t event, WiFiEventInfo_t info);
+// void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info);
+// void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info);
 
 /* ------------------------------------ */
 void setup()
@@ -87,12 +104,15 @@ void setup()
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
 
   LEDWallStop();
+  powerSuppliesOff();
   digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
 
   buzzer_beep();
 
   Serial.begin(115200);
   Serial.println(F("hello magdeburg!"));
+
+  initWiFiAndTelegram();
 
   // Initialize SD-Card
   if (!FileProcess::initFilesystem())
@@ -179,6 +199,10 @@ void stateEnter()
     millisIdle = millis();
     break;
   case __PLAY:
+    showCounter++;
+    telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
+    sendTelegramMessage(telegramMessage_tmp);
+
     powerSuppliesOn();
     buzzer_beep(4, 200);
 
@@ -266,6 +290,7 @@ void smRun()
     break;
 
   case __UNDEFINED:
+    checkTelegramBot();
     break;
 
   default:
@@ -397,7 +422,35 @@ void __wait_for_teensy()
 void __idle()
 {
   coinSlotSensor.update();
-  if (coinSlotSensor.fallingEdge() || (repeatShow && (millis() - millisIdle > 1000)))
+
+  // update Telegram Messages
+  if (millis() - bot_lasttime >= messageScanInterval)
+  {
+    Serial.println("checking Telegram Bot");
+    checkTelegramBot();
+    bot_lasttime = millis();
+  }
+
+  bool _play = false;
+  // eventually start show
+  if (coinSlotSensor.fallingEdge())
+  {
+    Serial.println("play show: coin sensor");
+    _play = true;
+  }
+  else if (repeatShow && (millis() - millisIdle > 10000))
+  {
+    Serial.println("play show: repeatShow");
+    _play = true;
+  }
+  else if (startFromTelegram)
+  {
+    Serial.println("play show: telegram message");
+    _play = true;
+    startFromTelegram = false;
+  }
+
+  if (_play)
   {
     state = __PLAY;
   }
@@ -406,7 +459,6 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
-
   if (millisCurrent - frameDuration > millisOld)
   {
 
@@ -450,18 +502,113 @@ void powerSuppliesOn()
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
-  return;
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
   delay(1000);
 }
 
 /* ------------------------------------ */
-void LEDWallStart() {
+void LEDWallStart()
+{
   digitalWrite(PIN_LEDWALL_TRIGGER, HIGH);
 }
 
 /* ------------------------------------ */
-void LEDWallStop() {
-  return;
+void LEDWallStop()
+{
   digitalWrite(PIN_LEDWALL_TRIGGER, LOW);
+}
+
+/* ------------------------------------ */
+void checkTelegramBot()
+{
+  if (!WiFi.isConnected())
+  {
+    initWiFiAndTelegram();
+    return;
+  }
+
+  int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+  while (numNewMessages)
+  {
+    handleNewTelegramMessages(numNewMessages);
+    numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+  }
+}
+
+/* ------------------------------------ */
+void handleNewTelegramMessages(int numNewMessages)
+{
+  for (int i = 0; i < numNewMessages; i++)
+  {
+    chat_id = bot.messages[i].chat_id;
+    String text = bot.messages[i].text;
+
+    String from_name = bot.messages[i].from_name;
+    if (from_name == "")
+      from_name = "Guest";
+
+    if (text == "/start" || text == "/play")
+    {
+      startFromTelegram = true;
+      sendTelegramMessage("starting show...");
+    }
+
+    if (text == "/loop")
+    {
+      repeatShow = true;
+      sendTelegramMessage("automatic show repeat on.");
+    }
+
+    if (text == "/stop")
+    {
+      repeatShow = false;
+      sendTelegramMessage("stopping show...");
+    }
+  }
+}
+
+/* ------------------------------------ */
+void initWiFiAndTelegram()
+{
+  Serial.print(F("Reconnect to WiFi"));
+  unsigned long startUpTime = millis();
+  WiFi.setAutoConnect(false);
+  WiFi.setAutoReconnect(false);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long beginWiFiInit = millis();
+  while (WiFi.status() != WL_CONNECTED && beginWiFiInit + wifiTimeout > millis())
+  {
+    Serial.print(".");
+    delay(500);
+  }
+
+  if (WiFi.isConnected())
+  {
+    configTime(0, 0, "pool.ntp.org");                    // get UTC time via NTP
+    secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+    Serial.println("WiFi connected.");
+    delay(500);
+    telegramMessage_tmp = "Reconnected with IP ";
+    telegramMessage_tmp += WiFi.localIP().toString();
+    telegramMessage_tmp += "\nI'm working here now for ";
+    telegramMessage_tmp += String(startUpTime);
+    telegramMessage_tmp += "ms!";
+    sendTelegramMessage(telegramMessage_tmp);
+  }
+  else
+  {
+    Serial.println(F("NOT connected."));
+    repeatShow = true;
+  }
+}
+
+/* ------------------------------------ */
+void sendTelegramMessage(String _message)
+{
+  if (chat_id != "" && WiFi.isConnected())
+  {
+    bot.sendMessage(chat_id, _message);
+    telegramMessage_tmp = "";
+  }
 }

@@ -119,10 +119,10 @@ void MotorUnit::smRun() {
 /* ------------------------------------ */
 void MotorUnit::idle() {
   if(endswitch.risingEdge() ) {
-    printMessage(F("\tEndswitch pressed"));
+    printMessage(F("Endswitch pressed"));
   }
   else if (endswitch.fallingEdge() ) {
-    printMessage(F("\tEndswitch released"));
+    printMessage(F("Endswitch released"));
   }
 }
 
@@ -162,7 +162,7 @@ void MotorUnit::goingToInit() {
 /* ------------------------------------ */
 void MotorUnit::drivingShow() {
   if(endswitch.risingEdge() || endswitch.read() == true  ) {
-    printMessage(F("\tERROR: Endswitch pressed while driving show."));
+    printMessage(F("ERROR: Endswitch pressed while driving show."));
     motorState = __ENDSWITCH_ERROR;
     return;
   } 

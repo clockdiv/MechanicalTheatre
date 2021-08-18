@@ -38,7 +38,8 @@ bool isRunning = false;
 bool isBlack = true;
 
 void triggerISR() {
-  isRunning = digitalReadFast(24);;
+  isRunning = digitalReadFast(24);
+  
   if (isRunning) {
     digitalWrite(LED, HIGH);
     isBlack = false;
@@ -65,6 +66,11 @@ void setup() {
 #define WHITE  0xFFFFFF
 #define BLACK  0x000000
 
+#define RED50    0x880000
+#define GREEN50  0x008800
+#define BLUE50   0x000088
+#define WHITE50  0x888888
+
 // Less intense...
 /*
   #define RED    0x160000
@@ -80,17 +86,19 @@ void loop() {
   int microsec = 2000000 / leds.numPixels();  // change them all in 2 seconds
 
   if (isRunning) {
-    colorWipe(RED, microsec);
-    colorWipe(GREEN, microsec);
-    colorWipe(BLUE, microsec);
-    colorWipe(YELLOW, microsec);
-    colorWipe(PINK, microsec);
-    colorWipe(ORANGE, microsec);
-    colorWipe(WHITE, microsec);
+    colorWipe(RED50, microsec);
+    colorWipe(WHITE50, microsec);
+    colorWipe(GREEN50, microsec);
+    colorWipe(WHITE50, microsec);
+    colorWipe(BLUE50, microsec);
+//    colorWipe(YELLOW, microsec);
+//    colorWipe(PINK, microsec);
+//    colorWipe(ORANGE, microsec);
+    colorWipe(WHITE50, microsec);
   }
   else {
     if (!isBlack) {
-      black();
+      //black();
     }
   }
 
