@@ -4,6 +4,8 @@
 /DEV ARDUINO/libraries
 .DS_Store
 
+pw.h
+
 
 # Prerequisites
 *.d
