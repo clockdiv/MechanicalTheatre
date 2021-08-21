@@ -11,7 +11,7 @@
     (via_costs 50)
     (plane_via_costs 5)
     (start_ripup_costs 100)
-    (start_pass_no 2184)
+    (start_pass_no 383)
     (layer_rule F.Cu
       (active on)
       (preferred_direction vertical)
@@ -74,35 +74,30 @@
   )
   (class "kicad_default"
     "Net-(BZ2-Pad1)" "Net-(C2-Pad1)" "Net-(C3-Pad1)" "Net-(C6-Pad1)" "Net-(C7-Pad1)" "Net-(C8-Pad1)" "Net-(C9-Pad1)" "Net-(C11-Pad1)"
-    "Net-(C12-Pad1)" "Net-(C13-Pad1)" "Net-(C14-Pad1)" "Net-(C15-Pad1)" "Net-(C16-Pad1)" "Net-(C18-Pad1)" "Net-(C20-Pad1)" "Net-(D1-Pad2)"
-    "Net-(D1-Pad1)" "Net-(D2-Pad2)" "Net-(D2-Pad1)" "Net-(D3-Pad2)" "Net-(D3-Pad1)" "Net-(D4-Pad2)" "Net-(D4-Pad1)" "Net-(J11-Pad25)"
-    "Net-(J11-Pad24)" "Net-(J11-Pad45)" "Net-(J11-Pad44)" "/WS2812B_Line_4" "/WS2812B_Line_3" "/WS2812B_Line_2" "/WS2812B_Line_1" "/I2C_SCL"
-    "/I2C_SDA" "Net-(J9-Pad2)" "Net-(J10-Pad2)" "Net-(J10-Pad1)" "Net-(J11-Pad88)" "/GENERAL_END_SWITCH_TEENSY" "Net-(J11-Pad85)" "Net-(J11-Pad84)"
-    "Net-(J11-Pad83)" "Net-(J11-Pad81)" "Net-(J11-Pad53)" "Net-(J11-Pad51)" "Net-(J11-Pad54)" "Net-(J11-Pad58)" "Net-(J11-Pad55)" "Net-(J11-Pad68)"
-    "Net-(J11-Pad64)" "Net-(J11-Pad61)" "Net-(J11-Pad63)" "Net-(J11-Pad65)" "Net-(J11-Pad78)" "Net-(J11-Pad74)" "Net-(J11-Pad71)" "Net-(J11-Pad73)"
-    "Net-(J11-Pad75)" "Net-(J11-Pad35)" "Net-(J11-Pad33)" "Net-(J11-Pad31)" "Net-(J11-Pad34)" "Net-(J11-Pad38)" "Net-(J11-Pad23)" "Net-(J11-Pad21)"
-    "Net-(J11-Pad28)" "Net-(J11-Pad18)" "Net-(J11-Pad11)" "Net-(J11-Pad13)" "Net-(J11-Pad41)" "Net-(J11-Pad43)" "Net-(J11-Pad48)" "Net-(J12-Pad81)"
-    "Net-(J12-Pad53)" "Net-(J12-Pad51)" "Net-(J12-Pad54)" "Net-(J12-Pad58)" "Net-(J12-Pad55)" "Net-(J12-Pad68)" "Net-(J12-Pad64)" "Net-(J12-Pad61)"
-    "Net-(J12-Pad63)" "Net-(J12-Pad65)" "Net-(J12-Pad71)" "Net-(J12-Pad73)" "Net-(J12-Pad77)" "Net-(J12-Pad75)" "Net-(J12-Pad35)" "Net-(J12-Pad33)"
-    "Net-(J12-Pad31)" "Net-(J12-Pad34)" "Net-(J12-Pad38)" "Net-(J12-Pad25)" "Net-(J12-Pad23)" "Net-(J12-Pad21)" "Net-(J12-Pad24)" "Net-(J12-Pad28)"
-    "Net-(J12-Pad18)" "Net-(J12-Pad14)" "Net-(J12-Pad11)" "Net-(J12-Pad13)" "Net-(J12-Pad15)" "Net-(J12-Pad41)" "Net-(J12-Pad43)" "Net-(J12-Pad44)"
-    "Net-(J12-Pad45)" "Net-(J12-Pad48)" "Net-(R7-Pad2)" "Net-(R8-Pad2)" "Net-(R9-Pad2)" "Net-(R10-Pad2)" "Net-(R11-Pad2)" "/PROX_SENSOR"
+    "Net-(C12-Pad1)" "Net-(C13-Pad1)" "Net-(C14-Pad1)" "Net-(C15-Pad1)" "Net-(C16-Pad1)" "Net-(C18-Pad1)" "Net-(D1-Pad2)" "Net-(D1-Pad1)"
+    "Net-(D2-Pad2)" "Net-(D2-Pad1)" "Net-(D3-Pad2)" "Net-(D4-Pad1)" "/I2C_SCL" "/I2C_SDA" "Net-(J9-Pad2)" "Net-(J11-Pad88)"
+    "/GENERAL_END_SWITCH_TEENSY" "Net-(J11-Pad83)" "Net-(J11-Pad81)" "Net-(J11-Pad53)" "Net-(J11-Pad51)" "Net-(J11-Pad58)" "Net-(J11-Pad68)" "Net-(J11-Pad61)"
+    "Net-(J11-Pad63)" "Net-(J11-Pad78)" "Net-(J11-Pad71)" "Net-(J11-Pad73)" "Net-(J11-Pad33)" "Net-(J11-Pad31)" "Net-(J11-Pad38)" "Net-(J11-Pad23)"
+    "Net-(J11-Pad21)" "Net-(J11-Pad28)" "Net-(J11-Pad18)" "Net-(J11-Pad11)" "Net-(J11-Pad13)" "Net-(J11-Pad41)" "Net-(J11-Pad43)" "Net-(J11-Pad48)"
+    "Net-(J12-Pad53)" "Net-(J12-Pad51)" "Net-(J12-Pad58)" "Net-(J12-Pad33)" "Net-(J12-Pad31)" "Net-(J12-Pad38)" "Net-(J12-Pad23)" "Net-(J12-Pad21)"
+    "Net-(J12-Pad28)" "Net-(J12-Pad18)" "Net-(J12-Pad11)" "Net-(J12-Pad13)" "Net-(J12-Pad41)" "Net-(J12-Pad43)" "Net-(J12-Pad48)" "/PROX_SENSOR"
     "/STEPPER_5_STEP" "/STEPPER_5_DIR" "/STEPPER_5_END" "/STEPPER_4_STEP" "/STEPPER_4_DIR" "/STEPPER_4_END" "/STEPPER_6_STEP" "/STEPPER_6_DIR"
     "/STEPPER_6_END" "/STEPPER_7_STEP" "/STEPPER_7_DIR" "/STEPPER_3_STEP" "/STEPPER_3_DIR" "/STEPPER_3_END" "/STEPPER_2_STEP" "/STEPPER_2_DIR"
     "/STEPPER_2_END" "/STEPPER_1_STEP" "/STEPPER_1_DIR" "/STEPPER_1_END" "/STEPPER_10_END" "/STEPPER_10_DIR" "/STEPPER_10_STEP" "/STEPPER_9_END"
     "/STEPPER_7_END" "/STEPPER_8_STEP" "/STEPPER_9_DIR" "/STEPPER_9_STEP" "/STEPPER_8_END" "/STEPPER_8_DIR" "/RELAIS_24V+5V" "/RELAIS_E-MAGNET"
-    "/STEPPER_11_END" "/STEPPER_11_DIR" "/STEPPER_11_STEP" "/STEPPER_12_END" "/STEPPER_12_DIR" "/STEPPER_12_STEP" "/START_STOP_TRIGGER" "/WS2812B_LED_LIGHTING"
-    "/STEPPER_14_END" "/STEPPER_14_DIR" "/STEPPER_14_STEP" "/STEPPER_13_END" "/STEPPER_13_DIR" "/STEPPER_13_STEP" "Net-(A1-Pad2)" "Net-(A1-Pad3)"
-    "/DMX_TX" "Net-(C21-Pad1)" "Net-(C22-Pad1)" "Net-(D5-Pad1)" "Net-(D6-Pad1)" "Net-(D8-Pad1)" "Net-(D9-Pad2)" "Net-(J6-Pad3)"
-    "/GENERAL_END_SWITCH_ESP" "/TEENSY_GENERAL_ENDSWITCH_DEBOUNCED" "/ESP_GENERAL_ENDSWITCH_DEBOUNCED" "Net-(D10-Pad2)" "Net-(D10-Pad1)" "Net-(D11-Pad1)" "Net-(A1-Pad8)" "Net-(U1-Pad47)"
-    "Net-(U1-Pad46)" "Net-(U1-Pad45)" "Net-(U1-Pad2)" "Net-(U1-Pad3)" "Net-(U1-Pad4)" "Net-(U1-Pad5)" "Net-(U1-Pad6)" "Net-(U1-Pad7)"
-    "Net-(U1-Pad8)" "Net-(U2-Pad38)" "Net-(U2-Pad37)" "Net-(U2-Pad36)" "Net-(U2-Pad24)" "Net-(U2-Pad23)" "Net-(U2-Pad18)" "Net-(U2-Pad17)"
-    "Net-(U2-Pad16)" "Net-(U2-Pad4)" "Net-(U2-Pad3)" "Net-(U2-Pad2)" "Net-(U2-Pad1)" "Net-(U4-Pad6)" "Net-(U15-Pad47)" "Net-(U15-Pad46)"
-    "Net-(U15-Pad45)" "Net-(U15-Pad44)" "Net-(U15-Pad43)" "Net-(U15-Pad42)" "Net-(U15-Pad41)" "Net-(U15-Pad40)" "Net-(U15-Pad39)" "Net-(U15-Pad38)"
-    "Net-(U15-Pad37)" "Net-(U15-Pad36)" "Net-(U15-Pad35)" "Net-(U15-Pad2)" "Net-(U15-Pad3)" "Net-(U15-Pad4)" "Net-(U15-Pad5)" "Net-(U15-Pad6)"
-    "Net-(U15-Pad7)" "Net-(U15-Pad8)" "Net-(U15-Pad9)" "Net-(U15-Pad10)" "Net-(U15-Pad11)" "Net-(U15-Pad12)" "Net-(U15-Pad13)" "Net-(U15-Pad33)"
-    "Net-(U15-Pad32)" "Net-(U15-Pad31)" "Net-(U15-Pad30)" "Net-(U15-Pad29)" "Net-(U15-Pad28)" "Net-(U15-Pad27)" "Net-(U15-Pad26)" "Net-(U15-Pad25)"
-    "Net-(U15-Pad24)" "Net-(U15-Pad14)" "Net-(U15-Pad15)" "Net-(U15-Pad19)"
+    "/STEPPER_11_END" "/STEPPER_11_DIR" "/STEPPER_11_STEP" "/STEPPER_12_END" "/STEPPER_12_DIR" "/STEPPER_12_STEP" "/START_STOP_TRIGGER" "/STEPPER_13_END"
+    "/STEPPER_13_DIR" "/STEPPER_13_STEP" "Net-(A1-Pad2)" "Net-(A1-Pad3)" "/DMX_TX" "Net-(C21-Pad1)" "Net-(C22-Pad1)" "Net-(D5-Pad1)"
+    "Net-(D6-Pad1)" "Net-(D8-Pad1)" "Net-(D9-Pad2)" "Net-(J6-Pad3)" "/TEENSY_GENERAL_ENDSWITCH_DEBOUNCED" "Net-(D10-Pad2)" "Net-(D10-Pad1)" "Net-(D11-Pad1)"
+    "Net-(A1-Pad8)" "Net-(U1-Pad47)" "Net-(U1-Pad46)" "Net-(U1-Pad45)" "Net-(U1-Pad2)" "Net-(U2-Pad38)" "Net-(U2-Pad37)" "Net-(U2-Pad36)"
+    "Net-(U2-Pad24)" "Net-(U2-Pad23)" "Net-(U2-Pad18)" "Net-(U2-Pad17)" "Net-(U2-Pad16)" "Net-(U2-Pad4)" "Net-(U2-Pad3)" "Net-(U2-Pad2)"
+    "Net-(U2-Pad1)" "Net-(U15-Pad47)" "Net-(U15-Pad46)" "Net-(U15-Pad45)" "Net-(U15-Pad44)" "Net-(U15-Pad43)" "Net-(U15-Pad42)" "Net-(U15-Pad41)"
+    "Net-(U15-Pad40)" "Net-(U15-Pad39)" "Net-(U15-Pad38)" "Net-(U15-Pad37)" "Net-(U15-Pad36)" "Net-(U15-Pad35)" "Net-(U15-Pad2)" "Net-(U15-Pad3)"
+    "Net-(U15-Pad4)" "Net-(U15-Pad5)" "Net-(U15-Pad6)" "Net-(U15-Pad7)" "Net-(U15-Pad8)" "Net-(U15-Pad9)" "Net-(U15-Pad10)" "Net-(U15-Pad11)"
+    "Net-(U15-Pad12)" "Net-(U15-Pad13)" "Net-(U15-Pad33)" "Net-(U15-Pad32)" "Net-(U15-Pad31)" "Net-(U15-Pad30)" "Net-(U15-Pad29)" "Net-(U15-Pad28)"
+    "Net-(U15-Pad27)" "Net-(U15-Pad26)" "Net-(U15-Pad25)" "Net-(U15-Pad24)" "Net-(U15-Pad14)" "Net-(U15-Pad15)" "Net-(U15-Pad19)" "Net-(D12-Pad1)"
+    "Net-(D13-Pad2)" "Net-(J2-Pad2)" "Net-(J2-Pad1)" "/Stepper Connection 13/END_ALL" "Net-(Q1-Pad1)" "Net-(Q2-Pad1)" "Net-(S1-Pad3)" "Net-(S2-Pad3)"
+    "Net-(SW1-Pad4)" "Net-(SW1-Pad3)" "Net-(SW1-Pad2)" "Net-(SW1-Pad1)" "Net-(U2-Pad35)" "Net-(U2-Pad33)" "Net-(U14-Pad8)" "Net-(U15-Pad23)"
+    "Net-(U15-Pad22)" "Net-(U15-Pad21)" "Net-(U15-Pad20)" "Net-(U13-Pad11)" "Net-(U13-Pad8)" "Net-(U14-Pad12)" "Net-(U14-Pad10)"
     (clearance_class "kicad_default")
     (via_rule kicad_default)
     (rule

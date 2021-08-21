@@ -3,10 +3,10 @@ EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 6 15
+Sheet 6 14
 Title ""
-Date ""
-Rev ""
+Date "2021-08-19"
+Rev "1.2"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -216,19 +216,6 @@ Wire Wire Line
 	6900 3700 7100 3700
 Wire Wire Line
 	6650 4400 7100 4400
-$Comp
-L Connector:Conn_01x02_Male J?
-U 1 1 60D39B9B
-P 5650 4000
-AR Path="/6111FD42/60D39B9B" Ref="J?"  Part="1" 
-AR Path="/611E4BD8/60D39B9B" Ref="J13"  Part="1" 
-F 0 "J13" H 5700 4050 25  0000 C CNN
-F 1 "Conn_01x02_General Purpose 05" H 5250 4050 25  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 5650 4000 50  0001 C CNN
-F 3 "~" H 5650 4000 50  0001 C CNN
-	1    5650 4000
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	5650 3100 6900 3100
 Wire Wire Line
@@ -242,71 +229,20 @@ Wire Wire Line
 $Comp
 L power:GND #PWR?
 U 1 1 60D39BA6
-P 6150 3900
+P 6650 4000
 AR Path="/6111FD42/60D39BA6" Ref="#PWR?"  Part="1" 
 AR Path="/611E4BD8/60D39BA6" Ref="#PWR092"  Part="1" 
-F 0 "#PWR092" H 6150 3650 50  0001 C CNN
-F 1 "GND" V 6150 3750 50  0000 R CNN
-F 2 "" H 6150 3900 50  0001 C CNN
-F 3 "" H 6150 3900 50  0001 C CNN
-	1    6150 3900
-	0    -1   -1   0   
+F 0 "#PWR092" H 6650 3750 50  0001 C CNN
+F 1 "GND" V 6650 3850 50  0000 R CNN
+F 2 "" H 6650 4000 50  0001 C CNN
+F 3 "" H 6650 4000 50  0001 C CNN
+	1    6650 4000
+	0    1    1    0   
 $EndComp
-$Comp
-L Device:R R?
-U 1 1 60D39BAC
-P 6000 4200
-AR Path="/6111FD42/60D39BAC" Ref="R?"  Part="1" 
-AR Path="/611E4BD8/60D39BAC" Ref="R29"  Part="1" 
-F 0 "R29" V 6000 4250 50  0000 R CNN
-F 1 "10k" V 5930 4245 50  0000 R CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5930 4200 50  0001 C CNN
-F 3 "~" H 6000 4200 50  0001 C CNN
-	1    6000 4200
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 60D39BB2
-P 6000 3900
-AR Path="/6111FD42/60D39BB2" Ref="R?"  Part="1" 
-AR Path="/611E4BD8/60D39BB2" Ref="R28"  Part="1" 
-F 0 "R28" V 6000 3950 50  0000 R CNN
-F 1 "10k" V 6100 3950 50  0000 R CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5930 3900 50  0001 C CNN
-F 3 "~" H 6000 3900 50  0001 C CNN
-	1    6000 3900
-	0    -1   -1   0   
-$EndComp
-$Comp
-L power:GND #PWR?
-U 1 1 60D39BB8
-P 6150 4200
-AR Path="/6111FD42/60D39BB8" Ref="#PWR?"  Part="1" 
-AR Path="/611E4BD8/60D39BB8" Ref="#PWR093"  Part="1" 
-F 0 "#PWR093" H 6150 3950 50  0001 C CNN
-F 1 "GND" V 6150 4050 50  0000 R CNN
-F 2 "" H 6150 4200 50  0001 C CNN
-F 3 "" H 6150 4200 50  0001 C CNN
-	1    6150 4200
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	5850 3900 5850 4000
-Wire Wire Line
-	5850 4100 5850 4200
-Wire Wire Line
-	5850 4000 7100 4000
-Connection ~ 5850 4000
-Wire Wire Line
-	5850 4100 7100 4100
-Connection ~ 5850 4100
 Wire Wire Line
 	7100 4200 6550 4200
 Wire Wire Line
 	6550 4200 6550 4400
-Text Notes 4850 4150 0    25   ~ 0
-simply two unused lines from cat cable. \npulled to gnd if unused, otherwise for\nprototyping / testing..
 Text HLabel 4700 3150 0    50   Input ~ 0
 Stepper_DIR
 Wire Wire Line
@@ -381,4 +317,21 @@ Wire Wire Line
 Wire Wire Line
 	5300 2750 5300 2900
 Connection ~ 5300 2750
+$Comp
+L power:+3.3V #PWR?
+U 1 1 61226827
+P 6650 4100
+AR Path="/6111FD42/61226827" Ref="#PWR?"  Part="1" 
+AR Path="/611E4BD8/61226827" Ref="#PWR0169"  Part="1" 
+F 0 "#PWR0169" H 6650 3950 50  0001 C CNN
+F 1 "+3.3V" V 6650 4200 50  0000 L CNN
+F 2 "" H 6650 4100 50  0001 C CNN
+F 3 "" H 6650 4100 50  0001 C CNN
+	1    6650 4100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6650 4000 7100 4000
+Wire Wire Line
+	6650 4100 7100 4100
 $EndSCHEMATC
