@@ -20,8 +20,8 @@ class MotorUnit {
     };
 
     AccelStepper stepper;
+    MotorUnit* motorResetDependency;  // can be a motor that *this* motor waits for until it's resetting
     Bounce endswitch;
-    states motorState, motorStateOld;
     static String stateStrings[];
     uint8_t pinDir;
     uint8_t pinStep;
@@ -41,6 +41,7 @@ class MotorUnit {
 
   public:
     String motorName;
+    states motorState, motorStateOld;
     bool tooFast;
     static uint8_t fps;           // frames per second for playback
     uint16_t animationLength;     // number of keyframes. assigned by read_keyframes_from_file()
@@ -48,6 +49,7 @@ class MotorUnit {
 
     MotorUnit();
     void initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert, uint16_t _initPosition, uint16_t _resetSpeed);
+    void setResetDependency(MotorUnit* _motorResetDependency);
     void setReset() { motorState = __GOING_TO_ENDSWITCH; }
     void setPlay() { motorState = __DRIVING_SHOW; }
     bool isIdle() { return motorState == __IDLE; }

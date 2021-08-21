@@ -86,6 +86,7 @@ void loop() {
   int microsec = 2000000 / leds.numPixels();  // change them all in 2 seconds
 
   if (isRunning) {
+    colorWipe(WHITE50, microsec);
     colorWipe(RED50, microsec);
     colorWipe(WHITE50, microsec);
     colorWipe(GREEN50, microsec);
@@ -94,7 +95,6 @@ void loop() {
 //    colorWipe(YELLOW, microsec);
 //    colorWipe(PINK, microsec);
 //    colorWipe(ORANGE, microsec);
-    colorWipe(WHITE50, microsec);
   }
   else {
     if (!isBlack) {

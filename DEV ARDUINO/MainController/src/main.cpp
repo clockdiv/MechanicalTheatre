@@ -89,9 +89,7 @@ void initWiFiAndTelegram();
 void checkTelegramBot();
 void handleNewTelegramMessages(int numNewMessages);
 void sendTelegramMessage(String _message);
-// void WiFiStationConnected(WiFiEvent_t event, WiFiEventInfo_t info);
-// void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info);
-// void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info);
+
 
 /* ------------------------------------ */
 void setup()
@@ -426,7 +424,7 @@ void __idle()
   // update Telegram Messages
   if (millis() - bot_lasttime >= messageScanInterval)
   {
-    Serial.println("checking Telegram Bot");
+    Serial.println(F("checking Telegram Bot"));
     checkTelegramBot();
     bot_lasttime = millis();
   }
@@ -435,17 +433,17 @@ void __idle()
   // eventually start show
   if (coinSlotSensor.fallingEdge())
   {
-    Serial.println("play show: coin sensor");
+    Serial.println(F("play show: coin sensor"));
     _play = true;
   }
   else if (repeatShow && (millis() - millisIdle > 10000))
   {
-    Serial.println("play show: repeatShow");
+    Serial.println(F("play show: repeatShow"));
     _play = true;
   }
   else if (startFromTelegram)
   {
-    Serial.println("play show: telegram message");
+    Serial.println(F("play show: telegram message"));
     _play = true;
     startFromTelegram = false;
   }
@@ -467,13 +465,13 @@ void __play()
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].moveToFramePosition(keyframeIndex);
-      if (steppers[i].tooFast)
-      {
-        Serial.print("too fast: ");
-        Serial.print(keyframeIndex);
-        Serial.print(" Motor: ");
-        Serial.println(steppers[i].motorName);
-      }
+      // if (steppers[i].tooFast)  // this is already checked in Blender. Checking here would not change any behaviour.
+      // {
+      //   Serial.print("too fast: ");
+      //   Serial.print(keyframeIndex);
+      //   Serial.print(" Motor: ");
+      //   Serial.println(steppers[i].motorName);
+      // }
     }
 
     // if animation finished...
@@ -550,19 +548,19 @@ void handleNewTelegramMessages(int numNewMessages)
     if (text == "/start" || text == "/play")
     {
       startFromTelegram = true;
-      sendTelegramMessage("starting show...");
+      sendTelegramMessage(F("starting show..."));
     }
 
     if (text == "/loop")
     {
       repeatShow = true;
-      sendTelegramMessage("automatic show repeat on.");
+      sendTelegramMessage(F("automatic show repeat on."));
     }
 
     if (text == "/stop")
     {
       repeatShow = false;
-      sendTelegramMessage("stopping show...");
+      sendTelegramMessage(F("stopping show..."));
     }
   }
 }
@@ -587,13 +585,13 @@ void initWiFiAndTelegram()
   {
     configTime(0, 0, "pool.ntp.org");                    // get UTC time via NTP
     secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-    Serial.println("WiFi connected.");
+    Serial.println(F("WiFi connected."));
     delay(500);
-    telegramMessage_tmp = "Reconnected with IP ";
+    telegramMessage_tmp = F("Reconnected with IP ");
     telegramMessage_tmp += WiFi.localIP().toString();
-    telegramMessage_tmp += "\nI'm working here now for ";
+    telegramMessage_tmp += F("\nI'm working here now for ");
     telegramMessage_tmp += String(startUpTime);
-    telegramMessage_tmp += "ms!";
+    telegramMessage_tmp += F("ms!");
     sendTelegramMessage(telegramMessage_tmp);
   }
   else
