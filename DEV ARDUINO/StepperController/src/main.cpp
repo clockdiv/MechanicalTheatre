@@ -72,6 +72,7 @@ void setup() {
   buzzer_beep();
 
   Serial.begin(115200);
+  delay(2000);
   Serial.println(F("hello magdeburg!"));
 
   // Initialize SD-Card
@@ -282,9 +283,18 @@ void __play() {
   if (millisCurrent - frameDuration > millisOld) {  
 
     keyframeIndex++;
+    Serial.print(keyframeIndex);
+    Serial.print(": ");
 
+<<<<<<< Updated upstream
     for (int i = 0; i < UNIT_COUNT; i++) {
       steppers[i].moveToFramePosition(keyframeIndex);
+=======
+    for (int i = 0; i < UNIT_COUNT; i++)
+    {
+      uint16_t motorSpeed = steppers[i].moveToFramePosition(keyframeIndex);
+      if (i == 1) Serial.println(motorSpeed);
+>>>>>>> Stashed changes
       // if(steppers[i].tooFast) {
       //   Serial.print("too fast: ");
       //   Serial.print(keyframeIndex);

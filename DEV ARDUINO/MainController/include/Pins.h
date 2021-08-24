@@ -21,7 +21,7 @@
 #define STEPPER_11_PULSE_PIN     17
 #define STEPPER_11_IS_INVERTED   1       // unknown yet
 
-#define STEPPER_11_INIT_POS      500
+#define STEPPER_11_INIT_POS      100
 #define STEPPER_11_RESET_SPEED   1500
 
 

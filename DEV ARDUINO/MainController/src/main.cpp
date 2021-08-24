@@ -64,7 +64,7 @@ uint16_t timesPlayed = 0;
 states state;
 states stateOld;
 
-bool repeatShow = false;
+bool repeatShow = true;
 bool startFromTelegram = false;
 uint16_t showCounter = 0;
 
@@ -112,7 +112,7 @@ void setup()
   Serial.begin(115200);
   Serial.println(F("hello magdeburg!"));
 
-  initWiFiAndTelegram();
+  // initWiFiAndTelegram();
 
   // Initialize SD-Card
   if (!FileProcess::initFilesystem())
@@ -182,7 +182,7 @@ void stateEnter()
   {
   case __INCOMING_SERIAL:
     LEDWallStop();
-    powerSuppliesOff();
+    // powerSuppliesOff();
     break;
   case __RESET:
     LEDWallStop();
@@ -200,8 +200,8 @@ void stateEnter()
     break;
   case __PLAY:
     showCounter++;
-    telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
-    sendTelegramMessage(telegramMessage_tmp);
+    // telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
+    // sendTelegramMessage(telegramMessage_tmp);
 
     powerSuppliesOn();
     buzzer_beep(4, 200);
@@ -290,7 +290,7 @@ void smRun()
     break;
 
   case __UNDEFINED:
-    checkTelegramBot();
+    // checkTelegramBot();
     break;
 
   default:
@@ -309,15 +309,15 @@ void __incoming_serial()
 {
   if (Serial.available() >= 1)
   {
-    Serial.println("incoming serial");
-
     char inChar = (char)Serial.read();
+
     if (inChar == 'u')
     {
       buzzer_beep(1, 100);
       digitalWrite(PIN_EXT_LED, HIGH);
 
       int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
+
       if (receiveError == -1)
       {
         // Error: Didn't receive as many bytes as expected
@@ -363,7 +363,6 @@ void __incoming_serial()
   }
   else
   {
-    Serial.print("idle after incoming serial");
     state = __IDLE;
   }
 }
@@ -424,14 +423,24 @@ void __idle()
   coinSlotSensor.update();
 
   // update Telegram Messages
+<<<<<<< Updated upstream
   if (millis() - bot_lasttime >= messageScanInterval)
   {
     Serial.println("checking Telegram Bot");
     checkTelegramBot();
     bot_lasttime = millis();
   }
+=======
+  // if (millis() - bot_lasttime >= messageScanInterval)
+  // {
+  //   Serial.println(F("checking Telegram Bot"));
+  //   checkTelegramBot();
+  //   bot_lasttime = millis();
+  // }
+>>>>>>> Stashed changes
 
   bool _play = false;
+
   // eventually start show
   if (coinSlotSensor.fallingEdge())
   {
@@ -496,14 +505,14 @@ void __play()
 void powerSuppliesOn()
 {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
-  delay(1000);
+  //delay(1000);
 }
 
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
-  delay(1000);
+  //delay(1000);
 }
 
 /* ------------------------------------ */

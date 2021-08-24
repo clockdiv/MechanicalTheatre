@@ -27,7 +27,7 @@
 #define STEPPER_2_IS_INVERTED   1
 
 #define STEPPER_2_INIT_POS      500
-#define STEPPER_2_RESET_SPEED   1500
+#define STEPPER_2_RESET_SPEED   3000
 
 
 
