@@ -27,6 +27,17 @@ String motornames[UNIT_COUNT] = {   "Ufo_X-Axis",
                                     "Reiter_2",
                                     "Luftpumpe", 
                                     "Halbkugel" };
+                                    
+const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
+                                                      0,   // Ufo_Y-Axis          // Y-Axis waits for X-Axis to reset
+                                                      -1,  // Schwaene_schwimmen
+                                                      -1,  // Schwaene_tauchen
+                                                      -1,  // Pferde_1
+                                                      -1,  // Pferde_2
+                                                      -1,  // Reiter_1
+                                                      -1,  // Reiter_2
+                                                      -1,  // Luftpumpe
+                                                      -1}; // Halbkugel
 
 const uint8_t steppersPinConfig[UNIT_COUNT][4] = {  // Stepper-Motor Pins
   {STEPPER_1_ENDSWITCH_PIN,  STEPPER_1_DIRECTION_PIN,  STEPPER_1_PULSE_PIN,  STEPPER_1_IS_INVERTED},     // End-Switch; Direction; Pulse; DirectionInvert

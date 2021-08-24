@@ -64,7 +64,7 @@ uint16_t timesPlayed = 0;
 states state;
 states stateOld;
 
-bool repeatShow = true;
+bool repeatShow = false;
 bool startFromTelegram = false;
 uint16_t showCounter = 0;
 
@@ -84,14 +84,13 @@ void powerSuppliesOn();
 void powerSuppliesOff();
 void LEDWallStart();
 void LEDWallStop();
+void coinslotEnable();
+void coinslotDisable();
 
 void initWiFiAndTelegram();
 void checkTelegramBot();
 void handleNewTelegramMessages(int numNewMessages);
 void sendTelegramMessage(String _message);
-// void WiFiStationConnected(WiFiEvent_t event, WiFiEventInfo_t info);
-// void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info);
-// void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info);
 
 /* ------------------------------------ */
 void setup()
@@ -105,7 +104,7 @@ void setup()
 
   LEDWallStop();
   powerSuppliesOff();
-  digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
+  coinslotDisable();
 
   buzzer_beep();
 
@@ -196,6 +195,7 @@ void stateEnter()
     break;
   case __IDLE:
     powerSuppliesOff();
+    coinslotEnable();
     millisIdle = millis();
     break;
   case __PLAY:
@@ -245,6 +245,7 @@ void stateExit()
     break;
 
   case __IDLE:
+    coinslotDisable();
     break;
 
   case __PLAY:
@@ -423,21 +424,12 @@ void __idle()
   coinSlotSensor.update();
 
   // update Telegram Messages
-<<<<<<< Updated upstream
-  if (millis() - bot_lasttime >= messageScanInterval)
-  {
-    Serial.println("checking Telegram Bot");
-    checkTelegramBot();
-    bot_lasttime = millis();
-  }
-=======
   // if (millis() - bot_lasttime >= messageScanInterval)
   // {
   //   Serial.println(F("checking Telegram Bot"));
   //   checkTelegramBot();
   //   bot_lasttime = millis();
   // }
->>>>>>> Stashed changes
 
   bool _play = false;
 
@@ -525,6 +517,16 @@ void LEDWallStart()
 void LEDWallStop()
 {
   digitalWrite(PIN_LEDWALL_TRIGGER, LOW);
+}
+
+/* ------------------------------------ */
+void coinslotEnable() {
+  digitalWrite(PIN_RELAIS_COINSLOT, LOW);
+}
+
+/* ------------------------------------ */
+void coinslotDisable(){
+  digitalWrite(PIN_RELAIS_COINSLOT, HIGH);
 }
 
 /* ------------------------------------ */

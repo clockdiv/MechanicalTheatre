@@ -96,6 +96,15 @@ void setup() {
                           steppersInitConfig[i][1]);
   }
 
+  // Set Motor Reset-Dependencies
+  for (int i = 0; i < UNIT_COUNT; i++)
+  {
+    if (steppersResetDependencies[i] >= 0)
+    {
+      steppers[i].setResetDependency(&steppers[steppersResetDependencies[i]]);
+    }
+  }
+
   state = __RESET;
   stateOld = __UNDEFINED;
 
