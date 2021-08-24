@@ -53,20 +53,19 @@ void MotorUnit::setKeyframeValue(uint16_t index, uint16_t value)
 /* ------------------------------------ */
 // sets the stepper's next position according to the timeline
 // and calculates the speed
-uint16_t MotorUnit::moveToFramePosition(uint16_t frame)
+void MotorUnit::moveToFramePosition(uint16_t frame)
 {
   stepper.moveTo(keyframeValues[frame]);
 
   // calculate Speed with this keyframe and upcoming keyframe
   // deltaPos = number of steps from the previous position to the current position
-  uint16_t deltaPos = abs(keyframeValues[frame] - keyframeValues[frame - 1]);
+  int16_t deltaPos = keyframeValues[frame] - keyframeValues[frame - 1];
 
-  uint16_t motorSpeed = deltaPos * fps;
+  int16_t motorSpeed = deltaPos * fps;
 
-  tooFast = motorSpeed > maxStepperSpeed;
+  tooFast = abs(motorSpeed) > maxStepperSpeed;
 
   stepper.setSpeed(motorSpeed);
-  return deltaPos;
 }
 
 /* ------------------------------------ */

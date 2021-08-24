@@ -54,7 +54,7 @@ class MotorUnit {
     void setPlay() { motorState = __DRIVING_SHOW; }
     bool isIdle() { return motorState == __IDLE; }
     void setKeyframeValue(uint16_t index, uint16_t value) ;
-    uint16_t moveToFramePosition(uint16_t frame);
+    void moveToFramePosition(uint16_t frame);
     void update();
     
 };
