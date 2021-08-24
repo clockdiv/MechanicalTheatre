@@ -2,10 +2,8 @@
 /HARDWARE/DataSheets + Manuals
 /HARDWARE/obsolete
 /DEV ARDUINO/libraries
+/DEV ARDUINO/MainController/include/pw.h
 .DS_Store
-
-pw.h
-
 
 # Prerequisites
 *.d

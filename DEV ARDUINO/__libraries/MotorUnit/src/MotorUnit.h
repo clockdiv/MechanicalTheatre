@@ -21,7 +21,6 @@ class MotorUnit {
 
     AccelStepper stepper;
     Bounce endswitch;
-    states motorState, motorStateOld;
     static String stateStrings[];
     uint8_t pinDir;
     uint8_t pinStep;
@@ -52,7 +51,6 @@ class MotorUnit {
     void setPlay() { motorState = __DRIVING_SHOW; }
     bool isIdle() { return motorState == __IDLE; }
     void setKeyframeValue(uint16_t index, uint16_t value) ;
-    void moveToFramePosition(uint16_t frame);
     void update();
 };
 
