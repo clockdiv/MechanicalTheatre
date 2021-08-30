@@ -27,19 +27,21 @@ MotorUnit::MotorUnit()
 }
 
 /* ------------------------------------ */
-void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert, uint16_t _initPosition, uint16_t _resetSpeed)
+void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert, uint16_t _initPosition, uint16_t _resetSpeed, bool _invertedEndswitch)
 {
   motorName = _name;
   initPosition = _initPosition;
   resetSpeed = _resetSpeed;
   motorResetDependency = nullptr;
+  invertedEndswitch = _invertedEndswitch;
 
-  stepper.setInterface(1);
+  stepper.setInterface(AccelStepper::DRIVER);
   stepper.setPins(_pinStep, _pinDir);
   stepper.setPinsInverted(directionInvert);
-  stepper.setMinPulseWidth(50);
+  stepper.setMinPulseWidth(15);
 
-  endswitch.attach(_pinEnd, INPUT_PULLDOWN);
+  invertedEndswitch ? endswitch.attach(_pinEnd, INPUT_PULLUP) : endswitch.attach(_pinEnd, INPUT_PULLDOWN);
+
   endswitch.interval(25);
 }
 
@@ -55,16 +57,19 @@ void MotorUnit::setKeyframeValue(uint16_t index, uint16_t value)
 // and calculates the speed
 void MotorUnit::moveToFramePosition(uint16_t frame)
 {
-  stepper.moveTo(keyframeValues[frame]);
+  long targetPosition = keyframeValues[frame];
+  stepper.moveTo(targetPosition);
 
   // calculate Speed with this keyframe and upcoming keyframe
   // deltaPos = number of steps from the previous position to the current position
-  int16_t deltaPos = keyframeValues[frame] - keyframeValues[frame - 1];
+  long deltaPos = targetPosition - stepper.currentPosition();
+  //long deltaPos = targetPosition - keyframeValues[frame - 1];
+  if (motorName == "Ufo_Y-Axis")
+    Serial.println(deltaPos);
 
-  int16_t motorSpeed = deltaPos * fps;
+  long motorSpeed = deltaPos * fps;
 
   tooFast = abs(motorSpeed) > maxStepperSpeed;
-
   stepper.setSpeed(motorSpeed);
 }
 
@@ -120,14 +125,14 @@ void MotorUnit::smRun()
 /* ------------------------------------ */
 void MotorUnit::idle()
 {
-  if (endswitch.risingEdge())
-  {
-    printMessage(F("Endswitch pressed"));
-  }
-  else if (endswitch.fallingEdge())
-  {
-    printMessage(F("Endswitch released"));
-  }
+  // if (endswitch.risingEdge())
+  // {
+  //   printMessage(F("Endswitch pressed"));
+  // }
+  // else if (endswitch.fallingEdge())
+  // {
+  //   printMessage(F("Endswitch released"));
+  // }
 }
 
 /* ------------------------------------ */
@@ -135,13 +140,13 @@ void MotorUnit::goingToEndswitch()
 {
   if (motorResetDependency == nullptr || motorResetDependency->motorState == __IDLE)
   {
-    if (endswitch.risingEdge() || endswitch.read() == true)
+    if (readEndswitch())
     {
-      printMessage(F("\tEndswitch pressed"));
       stepper.setCurrentPosition(0);
       motorState = __ENDSWITCH_PRESSED;
       return;
     }
+
     stepper.setSpeed(-resetSpeed);
     stepper.runSpeed();
   }
@@ -172,12 +177,13 @@ void MotorUnit::goingToInit()
 /* ------------------------------------ */
 void MotorUnit::drivingShow()
 {
-  if (endswitch.risingEdge() || endswitch.read() == true)
+  if (readEndswitch())
   {
     printMessage(F("ERROR: Endswitch pressed while driving show."));
     motorState = __ENDSWITCH_ERROR;
     return;
   }
+
   stepper.runSpeedToPosition();
 }
 
@@ -196,4 +202,23 @@ void MotorUnit::printMessage(String msg)
 void MotorUnit::setResetDependency(MotorUnit *_motorResetDependency)
 {
   motorResetDependency = _motorResetDependency;
+}
+
+bool MotorUnit::readEndswitch()
+{
+  if (!invertedEndswitch)
+  {
+    if (endswitch.risingEdge() || endswitch.read() == true)
+    {
+      return true;
+    }
+  }
+  else
+  {
+    if (endswitch.fallingEdge() || endswitch.read() == false)
+    {
+      return true;
+    }
+  }
+  return false;
 }

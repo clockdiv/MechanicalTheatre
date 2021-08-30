@@ -39,6 +39,9 @@ class MotorUnit {
     void endswitchError();
     void printMessage(String msg);
 
+    bool invertedEndswitch;
+    bool readEndswitch();
+
   public:
     String motorName;
     states motorState, motorStateOld;
@@ -48,7 +51,7 @@ class MotorUnit {
     uint16_t temp_switchPressedCounter;
 
     MotorUnit();
-    void initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert, uint16_t _initPosition, uint16_t _resetSpeed);
+    void initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8_t _pinStep, bool directionInvert, uint16_t _initPosition, uint16_t _resetSpeed, bool _invertedEndswitch);
     void setResetDependency(MotorUnit* _motorResetDependency);
     void setReset() { motorState = __GOING_TO_ENDSWITCH; }
     void setPlay() { motorState = __DRIVING_SHOW; }

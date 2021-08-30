@@ -64,7 +64,7 @@ uint16_t timesPlayed = 0;
 states state;
 states stateOld;
 
-bool repeatShow = false;
+bool repeatShow = true;
 bool startFromTelegram = false;
 uint16_t showCounter = 0;
 

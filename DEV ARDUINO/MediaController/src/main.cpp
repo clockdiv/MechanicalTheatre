@@ -1,3 +1,7 @@
+#ifndef ARDUINO_TEENSY41
+#error "teensy 4.1 needed for this project."
+#endif
+
 #include <Arduino.h>
 
 // includes for dmx:
@@ -9,6 +13,10 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+
+// local includes
+#include "pins.h"
+#include "stateMachine.h"
 
 // GUItool: begin automatically generated code
 AudioPlaySdWav playSdWav1;    //xy=179,246
@@ -22,28 +30,32 @@ AudioControlSGTL5000 sgtl5000_1; //xy=304,390
 AudioControlSGTL5000 sgtl5000_2; //xy=353,432
 // GUItool: end automatically generated code
 
-// Use these with the Teensy Audio Shield
-#define SDCARD_CS_PIN 10
-#define SDCARD_MOSI_PIN 7
-#define SDCARD_SCK_PIN 14
-
-
 // dmx configs
 qindesign::teensydmx::Sender dmxTx{Serial6};
 uint8_t data[3]{0x44, 0x88, 0xcc};
 
+// timing
+const uint8_t fps = 25;
+long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
+long frameDuration = 1000 / fps;   // duration of a frame in milliseconds
+uint16_t keyframeIndex = 0;        // current position of the timeline, used for playback
 
 // state logic
-bool isRunning = false;
-
+states state, stateOld;
+bool startShow = false, stopShow = false;
 
 // function declarations
+void smRun();
+void stateEnter();
+void stateExit();
+void __play();
+
 void triggerISR();
 void setupAudioShields();
 void playFile(const char *filename, AudioPlaySdWav &player);
-void startShow();
+void stopFile(AudioPlaySdWav &player);
 
-
+/*-------------------------------*/
 void setup()
 {
 
@@ -53,18 +65,104 @@ void setup()
 
   setupAudioShields();
 
-  attachInterrupt(24, triggerISR, CHANGE);
+  attachInterrupt(PIN_START_STOP_TRIGGER, triggerISR, CHANGE);
+  delay(1000);
+  Serial.println(F("starting"));
 
+  state = __IDLE;
 }
 
+/*-------------------------------*/
 void loop()
 {
-  double v = abs(sin(millis() / 1000.0));
-  dmxTx.set(1, uint8_t(v * 255));
-  delay(10);
+  if (state != stateOld)
+  {
+    Serial.print(F("state:\t\t"));
+    Serial.println(stateStrings[state]);
+
+    stateExit();
+    stateEnter();
+  }
+  millisCurrent = millis();
+
+  smRun();
 }
 
+/* ----------------------------- */
+void smRun()
+{
+  stateOld = state;
 
+  switch (state)
+  {
+  case __INCOMING_SERIAL:
+    //__incoming_serial();
+    break;
+
+  case __IDLE:
+    break;
+
+  case __PLAY:
+    __play();
+    break;
+
+  case __UNDEFINED:
+    break;
+
+  default:
+    break;
+  }
+}
+
+/* ----------------------------- */
+void stateEnter()
+{
+  switch (state)
+  {
+  case __INCOMING_SERIAL:
+    break;
+
+  case __IDLE:
+    break;
+
+  case __PLAY:
+    playFile("TEST12.WAV", playSdWav1);
+    playFile("TEST34.WAV", playSdWav2);
+    break;
+
+  case __UNDEFINED:
+    break;
+
+  default:
+    break;
+  }
+}
+
+/* ----------------------------- */
+void stateExit()
+{
+  switch (stateOld)
+  {
+  case __INCOMING_SERIAL:
+    break;
+
+  case __IDLE:
+    break;
+
+  case __PLAY:
+    stopFile(playSdWav1);
+    stopFile(playSdWav2);
+    break;
+
+  case __UNDEFINED:
+    break;
+
+  default:
+    break;
+  }
+}
+
+/*-------------------------------*/
 void setupAudioShields()
 {
   float volume = 0.7;
@@ -91,13 +189,14 @@ void setupAudioShields()
   }
 }
 
-
+/*-------------------------------*/
 void playFile(const char *filename, AudioPlaySdWav &player)
 {
-  if(player.isPlaying()) return;
-  
-  Serial.print("Playing file: ");
-  Serial.println(filename);
+  if (player.isPlaying())
+    return;
+
+  // Serial.print("Playing file: ");
+  // Serial.println(filename);
 
   // Start playing the file.  This sketch continues to
   // run while the file plays.
@@ -107,28 +206,83 @@ void playFile(const char *filename, AudioPlaySdWav &player)
   delay(5);
   return;
   // Simply wait for the file to finish playing.
-  while (player.isPlaying()) {
-    // uncomment these lines if you audio shield
-    // has the optional volume pot soldered
-    //float vol = analogRead(15);
-    //vol = vol / 1024;
-    // sgtl5000_1.volume(vol);
+  while (player.isPlaying())
+  {
   }
 }
 
-void triggerISR() {
-  isRunning = digitalReadFast(24);;
-  if (isRunning) {
-    digitalWrite(LED_BUILTIN, HIGH);
-  } else {
-    digitalWrite(LED_BUILTIN, LOW);
+/*-------------------------------*/
+void stopFile(AudioPlaySdWav &player)
+{
+  player.stop();
+}
+
+/*-------------------------------*/
+void triggerISR()
+{
+  digitalReadFast(PIN_START_STOP_TRIGGER) ? state = __PLAY : state = __IDLE;
+}
+
+/*-------------------------------*/
+void __play()
+{
+  if (millisCurrent - frameDuration > millisOld)
+  {
+    keyframeIndex++;
+
+    double v = abs(sin(millisCurrent / 1000.0));
+    dmxTx.set(1, uint8_t(v * 255));
+
+    millisOld = millisCurrent;
   }
 }
 
-
-void startShow() {
-  playFile("TEST12.WAV", playSdWav1);
-  playFile("TEST34.WAV", playSdWav2);
+/* ------------------------------------ */
+void serialEvent() {
+  state = __INCOMING_SERIAL;
 }
 
 
+/* ------------------------------------ */
+void __incoming_serial() {
+  // if (Serial.available() >= 1) {
+  //   Serial.println("incoming serial");
+
+  //   char inChar = (char)Serial.read();
+  //   if (inChar == 'u') {
+  //     buzzer_beep(1, 100);
+
+  //     digitalWrite(PIN_EXT_LED, HIGH);
+
+  //     int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
+  //     if (receiveError == -1) {
+  //       // did not receive as many bytes as expected
+  //     } else if (receiveError == -2) {
+  //       // error while writing file to sd-card
+  //     }
+
+  //     digitalWrite(PIN_EXT_LED, LOW);
+  //     buzzer_beep(2, 100);
+  //     delay(200);
+
+  //     // read all files after they are received and reset the animation
+  //     FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+  //     keyframeIndex = 0;
+  //     state = __RESET;
+  //   }
+  //   else if (inChar == 'r') {
+  //     FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+  //     state = __RESET;
+  //   }
+  //   else if (inChar == 'p') {
+  //      for (int i = 0; i < UNIT_COUNT; i++) {
+  //       steppers[i].setPlay();
+  //      }
+  //     state = __PLAY;
+  //   }
+  // }   
+  // else {
+  //   Serial.print("idle after incoming serial");
+  //   state = __IDLE;
+  // }
+}
