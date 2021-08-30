@@ -216,19 +216,6 @@ Wire Wire Line
 	6700 3900 6900 3900
 Wire Wire Line
 	6450 4600 6900 4600
-$Comp
-L Connector:Conn_01x02_Male J?
-U 1 1 60F289E5
-P 5450 4200
-AR Path="/6111FD42/60F289E5" Ref="J?"  Part="1" 
-AR Path="/60F0CD1D/60F289E5" Ref="J22"  Part="1" 
-F 0 "J22" H 5500 4250 25  0000 C CNN
-F 1 "Conn_01x02_General Purpose 14" H 5050 4250 25  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 5450 4200 50  0001 C CNN
-F 3 "~" H 5450 4200 50  0001 C CNN
-	1    5450 4200
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	5450 3300 6700 3300
 Wire Wire Line
@@ -242,71 +229,20 @@ Wire Wire Line
 $Comp
 L power:GND #PWR?
 U 1 1 60F289F0
-P 5950 4100
+P 6450 4200
 AR Path="/6111FD42/60F289F0" Ref="#PWR?"  Part="1" 
 AR Path="/60F0CD1D/60F289F0" Ref="#PWR0177"  Part="1" 
-F 0 "#PWR0177" H 5950 3850 50  0001 C CNN
-F 1 "GND" V 5950 3950 50  0000 R CNN
-F 2 "" H 5950 4100 50  0001 C CNN
-F 3 "" H 5950 4100 50  0001 C CNN
-	1    5950 4100
-	0    -1   -1   0   
+F 0 "#PWR0177" H 6450 3950 50  0001 C CNN
+F 1 "GND" V 6450 4050 50  0000 R CNN
+F 2 "" H 6450 4200 50  0001 C CNN
+F 3 "" H 6450 4200 50  0001 C CNN
+	1    6450 4200
+	0    1    1    0   
 $EndComp
-$Comp
-L Device:R R?
-U 1 1 60F289F6
-P 5800 4400
-AR Path="/6111FD42/60F289F6" Ref="R?"  Part="1" 
-AR Path="/60F0CD1D/60F289F6" Ref="R65"  Part="1" 
-F 0 "R65" V 5800 4450 50  0000 R CNN
-F 1 "10k" V 5730 4445 50  0000 R CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5730 4400 50  0001 C CNN
-F 3 "~" H 5800 4400 50  0001 C CNN
-	1    5800 4400
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 60F289FC
-P 5800 4100
-AR Path="/6111FD42/60F289FC" Ref="R?"  Part="1" 
-AR Path="/60F0CD1D/60F289FC" Ref="R64"  Part="1" 
-F 0 "R64" V 5800 4150 50  0000 R CNN
-F 1 "10k" V 5900 4150 50  0000 R CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder" V 5730 4100 50  0001 C CNN
-F 3 "~" H 5800 4100 50  0001 C CNN
-	1    5800 4100
-	0    -1   -1   0   
-$EndComp
-$Comp
-L power:GND #PWR?
-U 1 1 60F28A02
-P 5950 4400
-AR Path="/6111FD42/60F28A02" Ref="#PWR?"  Part="1" 
-AR Path="/60F0CD1D/60F28A02" Ref="#PWR0178"  Part="1" 
-F 0 "#PWR0178" H 5950 4150 50  0001 C CNN
-F 1 "GND" V 5950 4250 50  0000 R CNN
-F 2 "" H 5950 4400 50  0001 C CNN
-F 3 "" H 5950 4400 50  0001 C CNN
-	1    5950 4400
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	5650 4100 5650 4200
-Wire Wire Line
-	5650 4300 5650 4400
-Wire Wire Line
-	5650 4200 6900 4200
-Connection ~ 5650 4200
-Wire Wire Line
-	5650 4300 6900 4300
-Connection ~ 5650 4300
 Wire Wire Line
 	6900 4400 6350 4400
 Wire Wire Line
 	6350 4400 6350 4600
-Text Notes 4650 4350 0    25   ~ 0
-simply two unused lines from cat cable. \npulled to gnd if unused, otherwise for\nprototyping / testing..
 Text HLabel 4500 3350 0    50   Input ~ 0
 Stepper_DIR
 Wire Wire Line
@@ -319,4 +255,13 @@ Text HLabel 4500 4600 0    50   Output ~ 0
 END_ALL
 Wire Wire Line
 	4500 4600 6350 4600
+Wire Wire Line
+	6450 4200 6600 4200
+Wire Wire Line
+	6600 4200 6600 4300
+Connection ~ 6600 4200
+Wire Wire Line
+	6600 4200 6900 4200
+Wire Wire Line
+	6600 4300 6900 4300
 $EndSCHEMATC
