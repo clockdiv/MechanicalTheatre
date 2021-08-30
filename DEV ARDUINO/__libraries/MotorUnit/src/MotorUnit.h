@@ -15,6 +15,7 @@ class MotorUnit {
       __ENDSWITCH_PRESSED,
       __GOING_TO_INIT,
       __DRIVING_SHOW,
+      __TESTDRIVE,
       __ENDSWITCH_ERROR,
       __UNDEFINED
     };
@@ -59,6 +60,8 @@ class MotorUnit {
     void setKeyframeValue(uint16_t index, uint16_t value) ;
     void moveToFramePosition(uint16_t frame);
     void update();
+    void setTestDrive() { motorState = __TESTDRIVE; }
+    void testDrive();
     
 };
 

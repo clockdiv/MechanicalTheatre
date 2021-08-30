@@ -114,6 +114,10 @@ void MotorUnit::smRun()
     drivingShow();
     break;
 
+  case __TESTDRIVE:
+    testDrive();
+    break;
+
   case __ENDSWITCH_ERROR:
     break;
 
@@ -204,6 +208,17 @@ void MotorUnit::setResetDependency(MotorUnit *_motorResetDependency)
   motorResetDependency = _motorResetDependency;
 }
 
+/* ------------------------------------ */
+void MotorUnit::testDrive()
+{
+  if (!readEndswitch())
+  {
+    stepper.setSpeed(100);
+    stepper.runSpeed();
+  }
+}
+
+/* ------------------------------------ */
 bool MotorUnit::readEndswitch()
 {
   if (!invertedEndswitch)

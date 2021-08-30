@@ -1,0 +1,69 @@
+#ifndef PINS_H
+#define PINS_H
+
+
+// external hardware
+#define PIN_EXT_LED             13
+#define PIN_ENDSWITCH_GLOBAL    14
+
+// Ufo X-Axis
+#define STEPPER_1_ENDSWITCH_PIN 33
+#define STEPPER_1_DIRECTION_PIN 34
+#define STEPPER_1_PULSE_PIN     35
+
+// Ufo Y-Axis
+#define STEPPER_2_ENDSWITCH_PIN 36
+#define STEPPER_2_DIRECTION_PIN 37
+#define STEPPER_2_PULSE_PIN     38
+
+// Schwäne schwimmen
+#define STEPPER_3_ENDSWITCH_PIN 39
+#define STEPPER_3_DIRECTION_PIN 40
+#define STEPPER_3_PULSE_PIN     41
+
+// Schwäne tauchen
+#define STEPPER_4_ENDSWITCH_PIN 15
+#define STEPPER_4_DIRECTION_PIN 16
+#define STEPPER_4_PULSE_PIN     17
+
+// Pferde 1
+#define STEPPER_5_ENDSWITCH_PIN 20
+#define STEPPER_5_DIRECTION_PIN 21
+#define STEPPER_5_PULSE_PIN     22
+
+// Pferde 2
+#define STEPPER_6_ENDSWITCH_PIN 9
+#define STEPPER_6_DIRECTION_PIN 8
+#define STEPPER_6_PULSE_PIN     7
+
+// Reiter 1
+#define STEPPER_7_ENDSWITCH_PIN 12
+#define STEPPER_7_DIRECTION_PIN 11
+#define STEPPER_7_PULSE_PIN     10
+
+// Reiter 2
+#define STEPPER_8_ENDSWITCH_PIN 26
+#define STEPPER_8_DIRECTION_PIN 25
+#define STEPPER_8_PULSE_PIN     24
+
+// Luftpumpe
+#define STEPPER_9_ENDSWITCH_PIN 29
+#define STEPPER_9_DIRECTION_PIN 28
+#define STEPPER_9_PULSE_PIN     27
+
+// Halbkugel
+#define STEPPER_10_ENDSWITCH_PIN 32
+#define STEPPER_10_DIRECTION_PIN 31
+#define STEPPER_10_PULSE_PIN     30
+
+// Vorhang
+#define STEPPER_11_ENDSWITCH_PIN 6
+#define STEPPER_11_DIRECTION_PIN 5
+#define STEPPER_11_PULSE_PIN     4
+
+// Magd
+#define STEPPER_12_ENDSWITCH_PIN 3
+#define STEPPER_12_DIRECTION_PIN 2
+#define STEPPER_12_PULSE_PIN     1
+
+#endif

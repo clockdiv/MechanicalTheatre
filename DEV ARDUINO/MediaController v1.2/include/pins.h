@@ -6,6 +6,10 @@
 #define SDCARD_MOSI_PIN 7
 #define SDCARD_SCK_PIN 14
 
-#define PIN_START_STOP_TRIGGER  25
+// outputs
+#define PIN_EXT_LED             26
+// inputs
+#define PIN_START_STOP_TRIGGER  27
+
 
 #endif

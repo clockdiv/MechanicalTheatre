@@ -54,22 +54,22 @@ void triggerISR();
 void setupAudioShields();
 void playFile(const char *filename, AudioPlaySdWav &player);
 void stopFile(AudioPlaySdWav &player);
+void statusLEDOn();
+void statusLEDOff();
 
 /*-------------------------------*/
 void setup()
 {
+  pinMode(PIN_START_STOP_TRIGGER, INPUT_PULLDOWN);
+  pinMode(PIN_EXT_LED, OUTPUT);
+  attachInterrupt(PIN_START_STOP_TRIGGER, triggerISR, CHANGE);
 
   dmxTx.begin();
   // dmxTx.set(1, 128);
-  // dmxTx.set(10, data, 3);
-
+  // dmxTx.set(10, data, 3);  
   setupAudioShields();
 
-  attachInterrupt(PIN_START_STOP_TRIGGER, triggerISR, CHANGE);
-  delay(1000);
-  Serial.println(F("starting"));
-
-  state = __IDLE;
+  state = __IDLE; 
 }
 
 /*-------------------------------*/
@@ -123,9 +123,11 @@ void stateEnter()
     break;
 
   case __IDLE:
+    statusLEDOff();
     break;
 
   case __PLAY:
+    statusLEDOn();
     playFile("TEST12.WAV", playSdWav1);
     playFile("TEST34.WAV", playSdWav2);
     break;
@@ -181,11 +183,7 @@ void setupAudioShields()
   SPI.setSCK(SDCARD_SCK_PIN);
   if (!(SD.begin(SDCARD_CS_PIN)))
   {
-    while (1)
-    {
       Serial.println("Unable to access the SD card");
-      delay(500);
-    }
   }
 }
 
@@ -230,7 +228,7 @@ void __play()
   {
     keyframeIndex++;
 
-    double v = abs(sin(millisCurrent / 1000.0));
+    double v = abs(sin(millisCurrent / 100.0));
     dmxTx.set(1, uint8_t(v * 255));
 
     millisOld = millisCurrent;
@@ -285,4 +283,17 @@ void __incoming_serial() {
   //   Serial.print("idle after incoming serial");
   //   state = __IDLE;
   // }
+}
+
+
+/* ------------------------------------ */
+void statusLEDOn()
+{
+  digitalWrite(PIN_EXT_LED, HIGH);
+}
+
+/* ------------------------------------ */
+void statusLEDOff()
+{
+  digitalWrite(PIN_EXT_LED, LOW);
 }
