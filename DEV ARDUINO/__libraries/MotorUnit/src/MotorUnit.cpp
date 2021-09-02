@@ -63,9 +63,6 @@ void MotorUnit::moveToFramePosition(uint16_t frame)
   // calculate Speed with this keyframe and upcoming keyframe
   // deltaPos = number of steps from the previous position to the current position
   long deltaPos = targetPosition - stepper.currentPosition();
-  //long deltaPos = targetPosition - keyframeValues[frame - 1];
-  if (motorName == "Ufo_Y-Axis")
-    Serial.println(deltaPos);
 
   long motorSpeed = deltaPos * fps;
 

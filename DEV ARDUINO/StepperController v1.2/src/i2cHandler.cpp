@@ -13,8 +13,6 @@ void i2cHandler::initI2C(states *_state)
 
 void i2cHandler::receiveEvent(int bytes)
 {
-    Serial.println("receive Event");
-    Serial.println(bytes);
     // sets the register
     opcode = Wire.read();
 
@@ -46,8 +44,6 @@ void i2cHandler::receiveEvent(int bytes)
 
 void i2cHandler::requestEvent()
 {
-    Serial.println("request Event");
-    Serial.println(opcode);
     switch (opcode)
     {
     case REQUEST_IDLESTATE: // "Are you IDLE?"

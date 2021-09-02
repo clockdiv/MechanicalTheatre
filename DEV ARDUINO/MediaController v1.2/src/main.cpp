@@ -13,6 +13,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <Bounce2.h>
 
 // local includes
 #include "configurations.h"
@@ -47,6 +48,8 @@ unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 1000;
 bool statusLEDstate = false;
 
+Bounce startStopTrigger;
+
 // state logic
 states state, stateOld;
 bool startShow = false, stopShow = false;
@@ -57,13 +60,14 @@ uint16_t errorCode = 0;
 void smRun();
 void stateEnter();
 void stateExit();
+void __idle();
 void __play();
 void __incoming_serial();
 void __error();
 
 void triggerISR();
-void playFile(const char *filename, AudioPlaySdWav &player);
-void stopFile(AudioPlaySdWav &player);
+void playAudioFile(const char *filename, AudioPlaySdWav &player);
+void stopAudioFile(AudioPlaySdWav &player);
 
 void statusLEDOn();
 void statusLEDOff();
@@ -72,9 +76,9 @@ void statusLEDUpdate();
 /*-------------------------------*/
 void setup()
 {
-  pinMode(PIN_START_STOP_TRIGGER, INPUT_PULLDOWN);
   pinMode(PIN_EXT_LED, OUTPUT);
-  attachInterrupt(PIN_START_STOP_TRIGGER, triggerISR, CHANGE);
+ startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT);
+ startStopTrigger.interval(25);
 
   dmxTx.begin();
   // dmxTx.set(1, 128);
@@ -95,29 +99,24 @@ void setup()
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
 
+  stateOld = __UNDEFINED;
+  state = __IDLE;
+
+  delay(2000);
   // Initialize SD-Card
   if (!SD.begin(SDCARD_CS_PIN))
   {
     Serial.println(F("initialization of SD Card failed!"));
     errorCode = ERR_SD_FAILED;
     state = __ERROR;
-    return;
   }
-
-  // int8_t receiveError = KeyframeProcess::playDMXFile("DMX.DAT");
-  // if (receiveError == -1)
-  // {
-  //   errorCode = ERR_READING_FILES; // failed to open file for writing
-  //   state = __ERROR;
-  //   return;
-  // }
-
-  state = __IDLE;
 }
 
 /*-------------------------------*/
 void loop()
-{
+{  
+  millisCurrent = millis();
+
   if (state != stateOld)
   {
     Serial.print(F("state:\t\t"));
@@ -126,8 +125,8 @@ void loop()
     stateExit();
     stateEnter();
   }
-  millisCurrent = millis();
 
+  statusLEDUpdate();
   smRun();
 }
 
@@ -143,6 +142,7 @@ void smRun()
     break;
 
   case __IDLE:
+  __idle();
     break;
 
   case __PLAY:
@@ -176,8 +176,8 @@ void stateEnter()
     statusLEDBlinkFrequency = 1000;
 
     dmxPlayer.loadFile(dmxFileName);
-    playFile("TEST12.WAV", playSdWav1);
-    playFile("TEST34.WAV", playSdWav2);
+    playAudioFile("TEST12.WAV", playSdWav1);
+    playAudioFile("TEST34.WAV", playSdWav2);
     break;
 
   case __UNDEFINED:
@@ -203,8 +203,8 @@ void stateExit()
     break;
 
   case __PLAY:
-    stopFile(playSdWav1);
-    stopFile(playSdWav2);
+    stopAudioFile(playSdWav1);
+    stopAudioFile(playSdWav2);
     break;
 
   case __UNDEFINED:
@@ -216,7 +216,7 @@ void stateExit()
 }
 
 /*-------------------------------*/
-void playFile(const char *filename, AudioPlaySdWav &player)
+void playAudioFile(const char *filename, AudioPlaySdWav &player)
 {
   if (player.isPlaying())
     return;
@@ -238,15 +238,20 @@ void playFile(const char *filename, AudioPlaySdWav &player)
 }
 
 /*-------------------------------*/
-void stopFile(AudioPlaySdWav &player)
+void stopAudioFile(AudioPlaySdWav &player)
 {
   player.stop();
 }
 
 /*-------------------------------*/
-void triggerISR()
-{
-  digitalReadFast(PIN_START_STOP_TRIGGER) ? state = __PLAY : state = __IDLE;
+void __idle() {
+  startStopTrigger.update();
+  if(startStopTrigger.risingEdge()) {
+    state = __PLAY;
+  } else if (startStopTrigger.fallingEdge()) {
+    state = __IDLE;
+  }
+
 }
 
 /*-------------------------------*/
@@ -260,23 +265,21 @@ void __play()
       for (int i = 0; i < dmxPlayer.channelCount; i++)
       {
         value = dmxPlayer.playDMXFile();
-        if (value < 0)
+        if (value < 0) {
+          Serial.println("return < 0");
           break;
-        dmxTx.set(dmxPlayer.dmxChannels[i], value);
-        
+        }
+        dmxTx.set(dmxPlayer.dmxChannels[i], value);        
         Serial.print("ch:");
         Serial.print(dmxPlayer.dmxChannels[i]);
         Serial.print(" ");
         Serial.print(value);
         Serial.print(" ");
       }
-      Serial.println();
+      // Serial.println();
     } else {
       state = __IDLE;
     }
-
-    // double v = abs(sin(millisCurrent / 100.0));
-    // dmxTx.set(1, uint8_t(v * 255));
 
     millisOld = millisCurrent;
   }
