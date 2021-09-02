@@ -31,7 +31,6 @@
 #include "MotorUnit.h"
 #include "KeyframeProcess.h"
 
-bool repeatShow = true;
 uint16_t errorCode = 0;
 
 // motor units
@@ -44,7 +43,10 @@ i2cHandler i2chandler;
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
 long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
-bool testLEDstatus = true;
+
+unsigned long millisOldStatusLED = 0;
+unsigned long statusLEDBlinkFrequency = 0;
+bool statusLEDstate = false;
 
 states state;
 states stateOld;
@@ -63,14 +65,12 @@ void __error();
 
 void statusLEDOn();
 void statusLEDOff();
+void statusLEDUpdate();
 
 /* ------------------------------------ */
 void setup()
 {
   pinMode(PIN_EXT_LED, OUTPUT);
-  Serial.begin(115200);
-  delay(2000);
-  Serial.println(F("hello magdeburg!"));
 
   // Initialize i2c communication
   i2chandler.initI2C(&state);
@@ -134,6 +134,7 @@ void loop()
   }
   millisCurrent = millis();
 
+  statusLEDUpdate();
   smRun();
 }
 
@@ -142,12 +143,22 @@ void stateEnter()
 {
   switch (state)
   {
+  case __RESET:
+    statusLEDBlinkFrequency = 100;
+    break;
+
+  case __WAIT_FOR_MOTOR_INIT:
+    statusLEDBlinkFrequency = 100;
+    break;
+
   case __PLAY:
+    statusLEDBlinkFrequency = 1000;
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].setPlay();
     }
     break;
+
   case __HARDWARE_TEST:
     for (int i = 0; i < UNIT_COUNT; i++)
     {
@@ -162,6 +173,9 @@ void stateEnter()
 /* ------------------------------------ */
 void stateExit()
 {
+  statusLEDBlinkFrequency = 0;
+  statusLEDOff();
+
   switch (stateOld)
   {
   default:
@@ -241,7 +255,8 @@ void __incoming_serial()
       }
       statusLEDOff();
       delay(1000);
-      for(int i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++)
+      {
         statusLEDOn();
         delay(50);
         statusLEDOff();
@@ -367,7 +382,7 @@ void __hardware_test()
 
   if (millisCurrent - millisOld > 2000)
   {
-    if (testLEDstatus)
+    if (statusLEDstate)
     {
       statusLEDOn();
     }
@@ -375,7 +390,7 @@ void __hardware_test()
     {
       statusLEDOff();
     }
-    testLEDstatus = !testLEDstatus;
+    statusLEDstate = !statusLEDstate;
     millisOld = millisCurrent;
   }
 }
@@ -384,7 +399,10 @@ void __hardware_test()
 void __error()
 {
   if (errorCode <= 200)
+  {
     errorCode = ERR_UNDEFINED;
+  }
+
   uint8_t blinkCount = errorCode - 200;
 
   for (int i = 0; i < blinkCount; i++)
@@ -400,11 +418,26 @@ void __error()
 /* ------------------------------------ */
 void statusLEDOn()
 {
+  statusLEDstate = HIGH;
   digitalWrite(PIN_EXT_LED, HIGH);
 }
 
 /* ------------------------------------ */
 void statusLEDOff()
 {
+  statusLEDstate = LOW;
   digitalWrite(PIN_EXT_LED, LOW);
+}
+
+/* ------------------------------------ */
+void statusLEDUpdate()
+{
+  if (statusLEDBlinkFrequency > 0)
+  {
+    if (millisCurrent - millisOldStatusLED >= statusLEDBlinkFrequency)
+    {
+      statusLEDstate ? statusLEDOff() : statusLEDOn();
+      millisOldStatusLED = millisCurrent;
+    }
+  }
 }

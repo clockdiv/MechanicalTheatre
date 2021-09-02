@@ -8,8 +8,10 @@ const int led = 13;
 uint8_t opcode; // register
 
 void receiveEvent(int bytes) {
-  opcode = Wire.read();
+  Serial.print("receive Event: ");
+  Serial.println(bytes);
 
+  opcode = Wire.read();
   // If there are more than 1 byte, then the master is writing to the slave
   if (bytes > 1) {
     switch (opcode) {
@@ -28,6 +30,11 @@ void receiveEvent(int bytes) {
 }
 
 void requestEvent() {
+  Serial.print("request Event: ");
+  Serial.println(opcode);
+
+  Wire.write(5); // sending YES to esp
+
   switch (opcode) {
     case 0x02:
       break;

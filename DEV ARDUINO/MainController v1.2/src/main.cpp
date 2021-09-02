@@ -57,13 +57,16 @@ ESP32_tone toneBuzzer(0);
 // timing
 unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
 unsigned long millisIdle = 0;
+unsigned long teensyStateRequestInterval = 1000;
 uint16_t timesPlayed = 0;
-bool testLEDstatus = true;
+
+unsigned long millisOldStatusLED = 0;
+unsigned long statusLEDBlinkFrequency = 1000;
+bool statusLEDstate = false;
 
 states state;
 states stateOld;
 
-bool repeatShow = true;
 bool startFromTelegram = false;
 uint16_t showCounter = 0;
 
@@ -72,21 +75,23 @@ void smRun();
 void stateEnter();
 void stateExit();
 void __incoming_serial();
-void __reset();
-void __wait_for_motor_init();
 void __wait_for_teensy();
-void __idle();
 void __play();
+void __idle();
 void __hardware_test();
 
 void serialEvent();
 
 void powerSuppliesOn();
 void powerSuppliesOff();
+
 void coinslotEnable();
 void coinslotDisable();
+
 void statusLEDOn();
 void statusLEDOff();
+void statusLEDUpdate();
+
 void MediaControllerStart();
 void MediaControllerStop();
 
@@ -135,7 +140,7 @@ void setup()
   }
   else
   {
-    state = __RESET;
+    state = __WAIT_FOR_TEENSY;
   }
 
   buzzerTone(BUZZER_POWER_ON);
@@ -156,7 +161,6 @@ void setup()
   // Initialize i2c communication
   i2chandler.initI2C();
 
-
   stateOld = __UNDEFINED;
 
   millisOld = millis();
@@ -165,6 +169,8 @@ void setup()
 /* ------------------------------------ */
 void loop()
 {
+  millisCurrent = millis();
+
   if (state != stateOld)
   {
     Serial.print(F("state:\t\t"));
@@ -173,13 +179,13 @@ void loop()
     stateExit();
     stateEnter();
   }
-  millisCurrent = millis();
 
   if (Serial.available() >= 1)
   {
     serialEvent();
   }
 
+  statusLEDUpdate();
   smRun();
 }
 
@@ -193,17 +199,9 @@ void stateEnter()
     // powerSuppliesOff();
     break;
 
-  case __RESET:
-    MediaControllerStop();
-    powerSuppliesOn();
-    break;
-
-  case __WAIT_FOR_MOTOR_INIT:
-    powerSuppliesOn();
-    break;
-
   case __WAIT_FOR_TEENSY:
     powerSuppliesOn();
+    statusLEDBlinkFrequency = 100;
     break;
 
   case __IDLE:
@@ -213,6 +211,7 @@ void stateEnter()
     break;
 
   case __PLAY:
+    statusLEDBlinkFrequency = 1000;
     showCounter++;
     // telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
     // sendTelegramMessage(telegramMessage_tmp);
@@ -220,6 +219,7 @@ void stateEnter()
     powerSuppliesOn();
     buzzerTone(BUZZER_START_SHOW);
 
+    i2chandler.initI2C();
     while (!i2chandler.requestStart()) // wait until Teensy is ready
     {
       delay(1000);
@@ -243,15 +243,11 @@ void stateEnter()
 /* ------------------------------------ */
 void stateExit()
 {
+  statusLEDBlinkFrequency = 0;
+  statusLEDOff();
   switch (stateOld)
   {
   case __INCOMING_SERIAL:
-    break;
-
-  case __RESET:
-    break;
-
-  case __WAIT_FOR_MOTOR_INIT:
     break;
 
   case __WAIT_FOR_TEENSY:
@@ -284,14 +280,6 @@ void smRun()
   {
   case __INCOMING_SERIAL:
     __incoming_serial();
-    break;
-
-  case __RESET:
-    __reset();
-    break;
-
-  case __WAIT_FOR_MOTOR_INIT:
-    __wait_for_motor_init();
     break;
 
   case __WAIT_FOR_TEENSY:
@@ -339,35 +327,38 @@ void __incoming_serial()
 }
 
 /* ------------------------------------ */
-void __reset()
-{
-  //  keyframeIndex = 0;
-
-  Serial.println(F("reseting all motors..."));
-
-  state = __WAIT_FOR_MOTOR_INIT;
-}
-
-/* ------------------------------------ */
-void __wait_for_motor_init()
-{
-}
-
-/* ------------------------------------ */
 void __wait_for_teensy()
 {
-  // block while teensy is not ready yet. always wait for your little sibling!
-  while (!i2chandler.requestIdleState())
+  if (millisCurrent - millisOld >= teensyStateRequestInterval)
   {
-    delay(1000);
-  }
+    if (i2chandler.requestIdleState())
+      state = __IDLE;
 
-  state = __IDLE;
+    millisOld = millisCurrent;
+  }
+}
+
+/* ------------------------------------ */
+void __play()
+{
+  if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  {
+    if (i2chandler.requestIdleState())
+      state = __IDLE;
+
+    millisOld = millisCurrent;
+  }
 }
 
 /* ------------------------------------ */
 void __idle()
 {
+  btnA.update();
+  btnB.update();
+  dipswitch1.update();
+  dipswitch2.update();
+  dipswitch3.update();
+  dipswitch4.update();
   coinSlotSensor.update();
 
   // update Telegram Messages
@@ -379,21 +370,18 @@ void __idle()
   // }
 
   bool _play = false;
+  bool _repeatShow = !dipswitch1.read();
 
-  // eventually start show
-  if (coinSlotSensor.fallingEdge())
+  if (coinSlotSensor.fallingEdge() || btnA.fallingEdge())
   {
-    Serial.println("play show: coin sensor");
     _play = true;
   }
-  else if (repeatShow && (millis() - millisIdle > 10000))
+  else if (_repeatShow && (millis() - millisIdle > 10000))
   {
-    Serial.println("play show: repeatShow");
     _play = true;
   }
   else if (startFromTelegram)
   {
-    Serial.println("play show: telegram message");
     _play = true;
     startFromTelegram = false;
   }
@@ -402,44 +390,6 @@ void __idle()
   {
     state = __PLAY;
   }
-}
-
-/* ------------------------------------ */
-void __play()
-{
-  /*
-  if (millisCurrent - frameDuration > millisOld)
-  {
-
-    keyframeIndex++;
-
-    for (int i = 0; i < UNIT_COUNT; i++)
-    {
-      steppers[i].moveToFramePosition(keyframeIndex);
-      if (steppers[i].tooFast)
-      {
-        Serial.print("too fast: ");
-        Serial.print(keyframeIndex);
-        Serial.print(" Motor: ");
-        Serial.println(steppers[i].motorName);
-      }
-    }
-
-    // if animation finished...
-    if (keyframeIndex == steppers[0].animationLength - 1)
-    {
-      buzzer_beep(1, 200);
-      state = __RESET;
-    }
-
-    millisOld = millisCurrent;
-  }
-
-  for (int i = 0; i < UNIT_COUNT; i++)
-  {
-    steppers[i].update();
-  }
-  */
 }
 
 /* ------------------------------------ */
@@ -454,34 +404,44 @@ void __hardware_test()
   coinSlotSensor.update();
 
   if (btnA.fallingEdge())
+  {
     Serial.println("Button A pressed");
+    MediaControllerStart();
+  }
   else if (btnA.risingEdge())
     Serial.println("Button A released");
-  
+
   if (btnB.fallingEdge())
   {
     Serial.println("Button B pressed");
     i2chandler.requestMotortest();
-    MediaControllerStart();
   }
   else if (btnB.risingEdge())
     Serial.println("Button B released");
+
+  if (coinSlotSensor.fallingEdge())
+  {
+    Serial.println("CoinSlotSensor pressed");
+  }
+  else if (coinSlotSensor.risingEdge())
+    Serial.println("CoinSlotSensor released");
+
 
   if (dipswitch1.fallingEdge())
     Serial.println("DipSwitch 1 ON");
   else if (dipswitch1.risingEdge())
     Serial.println("DipSwitch 1 OFF");
-  
+
   if (dipswitch2.fallingEdge())
     Serial.println("DipSwitch 2 ON");
   else if (dipswitch2.risingEdge())
     Serial.println("DipSwitch 2 OFF");
-  
+
   if (dipswitch3.fallingEdge())
     Serial.println("DipSwitch 3 ON");
   else if (dipswitch3.risingEdge())
     Serial.println("DipSwitch 3 OFF");
-  
+
   if (dipswitch4.fallingEdge())
     Serial.println("DipSwitch 4 ON");
   else if (dipswitch4.risingEdge())
@@ -489,7 +449,7 @@ void __hardware_test()
 
   if (millisCurrent - millisOld > 2000)
   {
-    if (testLEDstatus)
+    if (statusLEDstate)
     {
       powerSuppliesOn();
       coinslotEnable();
@@ -502,7 +462,7 @@ void __hardware_test()
       coinslotDisable();
       statusLEDOff();
     }
-    testLEDstatus = !testLEDstatus;
+    statusLEDstate = !statusLEDstate;
     millisOld = millisCurrent;
   }
 }
@@ -548,13 +508,28 @@ void coinslotDisable()
 /* ------------------------------------ */
 void statusLEDOn()
 {
+  statusLEDstate = HIGH;
   digitalWrite(PIN_EXT_LED, HIGH);
 }
 
 /* ------------------------------------ */
 void statusLEDOff()
 {
+  statusLEDstate = LOW;
   digitalWrite(PIN_EXT_LED, LOW);
+}
+
+/* ------------------------------------ */
+void statusLEDUpdate()
+{
+  if (statusLEDBlinkFrequency > 0)
+  {
+    if (millisCurrent - millisOldStatusLED >= statusLEDBlinkFrequency)
+    {
+      statusLEDstate ? statusLEDOff() : statusLEDOn();
+      millisOldStatusLED = millisCurrent;
+    }
+  }
 }
 
 /* ------------------------------------ */
@@ -592,15 +567,8 @@ void handleNewTelegramMessages(int numNewMessages)
       sendTelegramMessage("starting show...");
     }
 
-    if (text == "/loop")
-    {
-      repeatShow = true;
-      sendTelegramMessage("automatic show repeat on.");
-    }
-
     if (text == "/stop")
     {
-      repeatShow = false;
       sendTelegramMessage("stopping show...");
     }
   }
@@ -638,7 +606,6 @@ void initWiFiAndTelegram()
   else
   {
     Serial.println(F("NOT connected."));
-    repeatShow = true;
   }
 }
 
@@ -655,12 +622,17 @@ void sendTelegramMessage(String _message)
 /* ------------------------------------ */
 void buzzerTone(uint8_t signalID)
 {
+  if (dipswitch4.read())
+    return;
+
   switch (signalID)
   {
 
   case BUZZER_TEST:
     toneBuzzer.tone(PIN_BUZZER, NOTE_A4);
-    delay(200);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(40);
     toneBuzzer.tone(PIN_BUZZER, NOTE_A5);
     delay(200);
     toneBuzzer.noTone(PIN_BUZZER);
@@ -668,15 +640,31 @@ void buzzerTone(uint8_t signalID)
 
   case BUZZER_POWER_ON:
     toneBuzzer.tone(PIN_BUZZER, NOTE_C5);
-    delay(200);
-    toneBuzzer.tone(PIN_BUZZER, NOTE_B4);
-    delay(150);
-    toneBuzzer.tone(PIN_BUZZER, NOTE_E4);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(80);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_C5);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
     delay(400);
-    toneBuzzer.tone(PIN_BUZZER, NOTE_F4);
-    delay(400);
+
+    toneBuzzer.tone(PIN_BUZZER, NOTE_E5);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(80);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_E5);
+    delay(80);
     toneBuzzer.noTone(PIN_BUZZER);
     break;
+
+  case BUZZER_START_SHOW:
+    toneBuzzer.tone(PIN_BUZZER, NOTE_E6);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(80);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_F6);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
     break;
   }
 }
