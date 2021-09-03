@@ -106,12 +106,16 @@ void buzzerTone(uint8_t signalID);
 /* ------------------------------------ */
 void setup()
 {
+  Serial.begin(115200);
+  Serial.println(F("hello magdeburg!"));
+
   // Outputs
   pinMode(PIN_EXT_LED, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
   pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
   pinMode(PIN_MEDIACONTROLLER_TRIGGER, OUTPUT);
+  pinMode(PIN_PLAY_REQUEST, OUTPUT);
 
   // Inputs
   coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT);
@@ -121,7 +125,7 @@ void setup()
   dipswitch2.attach(PIN_DIPSWITCH_2, INPUT_PULLUP);
   dipswitch3.attach(PIN_DIPSWITCH_3, INPUT_PULLUP);
   dipswitch4.attach(PIN_DIPSWITCH_4, INPUT_PULLUP);
-  teensyIsReady.attach(PIN_IS_PLAYING, INPUT);
+  teensyIsReady.attach(PIN_IS_READY, INPUT);
 
   btnA.interval(DEBOUNCE_TIME);
   btnB.interval(DEBOUNCE_TIME);
@@ -147,9 +151,6 @@ void setup()
   }
 
   buzzerTone(BUZZER_POWER_ON);
-
-  Serial.begin(115200);
-  Serial.println(F("hello magdeburg!"));
 
   // initWiFiAndTelegram();
 
@@ -207,7 +208,7 @@ void stateEnter()
   switch (state)
   {
   case __INCOMING_SERIAL:
-    MediaControllerStop();
+    // MediaControllerStop();
     // powerSuppliesOff();
     break;
 
@@ -229,7 +230,7 @@ void stateEnter()
     // sendTelegramMessage(telegramMessage_tmp);
 
     powerSuppliesOn();
-    delay(100);
+    
     buzzerTone(BUZZER_START_SHOW);
 
     // i2chandler.initI2C();
@@ -240,6 +241,7 @@ void stateEnter()
     // Serial.println("starting to play");
 
     MediaControllerStart();
+    delay(100);
     break;
 
   case __HARDWARE_TEST:
@@ -272,7 +274,7 @@ void stateExit()
     break;
 
   case __PLAY:
-    MediaControllerStop();
+    //MediaControllerStop();
     break;
 
   case __HARDWARE_TEST:
@@ -344,7 +346,8 @@ void __incoming_serial()
 /* ------------------------------------ */
 void __wait_for_teensy()
 {
-  if(teensyIsReady.read() == HIGH) {
+  if (teensyIsReady.read() == HIGH)
+  {
     state = __IDLE;
   }
   // if (millisCurrent - millisOld >= teensyStateRequestInterval)
@@ -359,8 +362,11 @@ void __wait_for_teensy()
 /* ------------------------------------ */
 void __play()
 {
-  if(teensyIsReady.read() == HIGH) {
-    state = __IDLE;
+  teensyIsReady.update();
+  if (teensyIsReady.read() == HIGH)
+  {
+    Serial.println("is high");
+    //state = __IDLE;
   }
 
   // if (millisCurrent - millisOld >= teensyStateRequestInterval)
@@ -476,13 +482,14 @@ void __hardware_test()
 void powerSuppliesOn()
 {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
-  //delay(1000);
+  delay(5000);
 }
 
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
-  if (!dipswitch2.read()) { // on-position
+  if (!dipswitch2.read())
+  { // on-position
     return;
   }
 
@@ -493,13 +500,21 @@ void powerSuppliesOff()
 /* ------------------------------------ */
 void MediaControllerStart()
 {
+  Serial.println("media controller start");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
   digitalWrite(PIN_PLAY_REQUEST, HIGH);
+  delay(20);
+  digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
+  digitalWrite(PIN_PLAY_REQUEST, LOW);
+  delay(100);
+
+  teensyIsReady.update();
 }
 
 /* ------------------------------------ */
 void MediaControllerStop()
 {
+  Serial.println("media controller stop");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
   digitalWrite(PIN_PLAY_REQUEST, LOW);
 }
@@ -633,7 +648,7 @@ void sendTelegramMessage(String _message)
 /* ------------------------------------ */
 void buzzerTone(uint8_t signalID)
 {
-  if (dipswitch4.read())  // off-position
+  if (dipswitch4.read()) // off-position
     return;
 
   switch (signalID)
