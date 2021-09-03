@@ -34,7 +34,7 @@ int8_t receive_keyframes(String filenames[], uint8_t count);
 /* ------------------------------------ */
 void listFiles();
 void deleteFiles(String filenames[], uint8_t count);
-
+void deleteFile(String _filename);
 /* ------------------------------------ */
 /* Writes the 2-byte keyframe pairs to  */
 /* a binary file                        */

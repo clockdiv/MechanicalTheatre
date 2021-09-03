@@ -3,6 +3,7 @@
 uint16_t DMXKeyframeProcess::frameCount = 0;   // size of incoming data package
 uint16_t DMXKeyframeProcess::channelCount = 0; // the number of curves/timelines to receive (each stepper one curve)
 uint16_t DMXKeyframeProcess::dmxChannels[] = {0};
+char DMXKeyframeProcess::dmxValues[512] = {0};
 File DMXKeyframeProcess::dmxFile;
 bool DMXKeyframeProcess::eof = false;
 
@@ -11,6 +12,13 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
     // Open file to write into
     char filename[_filename.length() + 1];
     _filename.toCharArray(filename, sizeof(filename));
+
+    if (SD.exists(filename))
+    {
+      Serial.print("deleting ");
+      Serial.println(filename);
+      SD.remove(filename);
+    }
 
     dmxFile = SD.open(filename, FILE_WRITE | O_TRUNC);
     if (!dmxFile)
@@ -139,12 +147,13 @@ int16_t DMXKeyframeProcess::playDMXFile()
 {
     if (dmxFile.available())
     {
-        int16_t value = int16_t(dmxFile.read());
-        return value;
+        dmxFile.readBytes(dmxValues, channelCount);
+        //int16_t value = int16_t(dmxFile.read());
+        return 0;
     }
     else
     {
-        Serial.println("end of file");
+        Serial.println(F("end of file"));
         eof = true;
         dmxFile.close();
         return -1;
