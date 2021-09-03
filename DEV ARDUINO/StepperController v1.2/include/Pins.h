@@ -5,6 +5,8 @@
 // external hardware
 #define PIN_EXT_LED             13
 #define PIN_ENDSWITCH_GLOBAL    14
+#define PIN_PLAY_REQUEST        18
+#define PIN_IS_READY            19
 
 // Ufo X-Axis
 #define STEPPER_1_ENDSWITCH_PIN 33

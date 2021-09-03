@@ -1,7 +1,6 @@
 #ifndef I2CHANDLER_H
 #define I2CHANDLER_H
 
-#include "i2c_driver.h"
 #include "i2c_driver_wire.h"
 #include "StateMachine.h"
 

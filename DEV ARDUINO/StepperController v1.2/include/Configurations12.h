@@ -95,7 +95,7 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
 
 const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {0,  // Ufo_X-Axis
                                                       0,  // Ufo_Y-Axis
-                                                      0,  // Schwaene_schwimmen
+                                                      1,  // Schwaene_schwimmen
                                                       0,  // Schwaene_tauchen
                                                       1,  // Pferde_1
                                                       1,  // Pferde_2

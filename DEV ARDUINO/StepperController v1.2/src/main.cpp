@@ -19,13 +19,11 @@
 #endif
 
 #include <Arduino.h>
-#include "i2c_driver.h"
-#include "i2c_driver_wire.h"
-
+#include <Bounce2.h>
 // local includes
 #include "Configurations12.h"
 #include "StateMachine.h"
-#include "i2cHandler.h"
+// #include "i2cHandler.h"
 
 // cross-project includes
 #include "MotorUnit.h"
@@ -37,7 +35,7 @@ uint16_t errorCode = 0;
 MotorUnit steppers[UNIT_COUNT];
 
 // communication
-i2cHandler i2chandler;
+// i2cHandler i2chandler;
 
 // timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
@@ -48,8 +46,12 @@ unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 0;
 bool statusLEDstate = false;
 
+Bounce playRequest;
+
 states state;
 states stateOld;
+
+elapsedMillis sinceDebugMessage;
 
 // function declarations
 void smRun();
@@ -66,15 +68,22 @@ void __error();
 void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
+void setIsReady();
+void setNotReady();
 
 /* ------------------------------------ */
 void setup()
 {
-  delay(2000);
+  while (!Serial)
+    ;
+
   pinMode(PIN_EXT_LED, OUTPUT);
+  pinMode(PIN_IS_READY, OUTPUT);
+  playRequest.attach(PIN_PLAY_REQUEST, INPUT);
+  playRequest.interval(5);
 
   // Initialize i2c communication
-  i2chandler.initI2C(&state);
+  // i2chandler.initI2C(&state);
 
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++)
@@ -127,6 +136,15 @@ void loop()
 {
   millisCurrent = millis();
 
+  playRequest.update();
+
+  if (sinceDebugMessage >= 500)
+  {
+    Serial.print("state: ");
+    Serial.println(stateStrings[state]);
+    sinceDebugMessage = 0;
+  }
+
   if (state != stateOld)
   {
     Serial.print(F("state:\t\t"));
@@ -153,12 +171,16 @@ void stateEnter()
     statusLEDBlinkFrequency = 100;
     break;
 
+  case __IDLE:
+    setIsReady();
+    break;
   case __PLAY:
     statusLEDBlinkFrequency = 1000;
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].setPlay();
     }
+    setNotReady();
     break;
 
   case __HARDWARE_TEST:
@@ -333,6 +355,10 @@ void __wait_for_motor_init()
 /* ------------------------------------ */
 void __idle()
 {
+  if (playRequest.risingEdge())
+  {
+    state = __PLAY;
+  }
   // for (int i = 0; i < UNIT_COUNT; i++)
   // {
   //   steppers[i].update();
@@ -342,11 +368,15 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
+  if(playRequest.fallingEdge()){
+    state = __RESET;
+    return;
+  }
   if (millisCurrent - frameDuration >= millisOld)
   {
 
     keyframeIndex++;
-
+    Serial.println(keyframeIndex);
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].moveToFramePosition(keyframeIndex);
@@ -442,4 +472,16 @@ void statusLEDUpdate()
       millisOldStatusLED = millisCurrent;
     }
   }
+}
+
+/* ------------------------------------ */
+void setIsReady()
+{
+  digitalWrite(PIN_IS_READY, HIGH);
+}
+
+/* ------------------------------------ */
+void setNotReady()
+{
+  digitalWrite(PIN_IS_READY, LOW);
 }

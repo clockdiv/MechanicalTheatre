@@ -19,7 +19,7 @@
 #endif
 
 #include <Arduino.h>
-#include <Wire.h>
+//#include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include "UniversalTelegramBot.h"
@@ -30,7 +30,7 @@
 // local includes
 #include "Configurations.h"
 #include "StateMachine.h"
-#include "i2cHandler.h"
+//#include "i2cHandler.h"
 
 // cross-project includes
 //#include "KeyframeProcess.h"
@@ -45,12 +45,13 @@ String chat_id = GROUP_ID;
 String telegramMessage_tmp = "";
 
 // communication between microcontrollers
-i2cHandler i2chandler;
+//i2cHandler i2chandler;
 
 // coin slot
 Bounce coinSlotSensor;
 Bounce btnA, btnB;
 Bounce dipswitch1, dipswitch2, dipswitch3, dipswitch4;
+Bounce teensyIsReady;
 
 ESP32_tone toneBuzzer(0);
 
@@ -120,6 +121,7 @@ void setup()
   dipswitch2.attach(PIN_DIPSWITCH_2, INPUT_PULLUP);
   dipswitch3.attach(PIN_DIPSWITCH_3, INPUT_PULLUP);
   dipswitch4.attach(PIN_DIPSWITCH_4, INPUT_PULLUP);
+  teensyIsReady.attach(PIN_IS_PLAYING, INPUT);
 
   btnA.interval(DEBOUNCE_TIME);
   btnB.interval(DEBOUNCE_TIME);
@@ -128,6 +130,7 @@ void setup()
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
   coinSlotSensor.interval(DEBOUNCE_TIME);
+  teensyIsReady.interval(5);
 
   MediaControllerStop();
   powerSuppliesOff();
@@ -159,7 +162,7 @@ void setup()
   // }
 
   // Initialize i2c communication
-  i2chandler.initI2C();
+  //i2chandler.initI2C();
 
   stateOld = __UNDEFINED;
 
@@ -176,6 +179,7 @@ void loop()
   dipswitch3.update();
   dipswitch4.update();
   coinSlotSensor.update();
+  teensyIsReady.update();
 
   millisCurrent = millis();
 
@@ -225,14 +229,15 @@ void stateEnter()
     // sendTelegramMessage(telegramMessage_tmp);
 
     powerSuppliesOn();
+    delay(100);
     buzzerTone(BUZZER_START_SHOW);
 
-    i2chandler.initI2C();
-    while (!i2chandler.requestStart()) // wait until Teensy is ready
-    {
-      delay(1000);
-    };
-    Serial.println("starting to play");
+    // i2chandler.initI2C();
+    // while (!i2chandler.requestStart()) // wait until Teensy is ready
+    // {
+    //   delay(1000);
+    // };
+    // Serial.println("starting to play");
 
     MediaControllerStart();
     break;
@@ -339,25 +344,32 @@ void __incoming_serial()
 /* ------------------------------------ */
 void __wait_for_teensy()
 {
-  if (millisCurrent - millisOld >= teensyStateRequestInterval)
-  {
-    if (i2chandler.requestIdleState())
-      state = __IDLE;
-
-    millisOld = millisCurrent;
+  if(teensyIsReady.read() == HIGH) {
+    state = __IDLE;
   }
+  // if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  // {
+  //   if (i2chandler.requestIdleState())
+  //     state = __IDLE;
+
+  //   millisOld = millisCurrent;
+  // }
 }
 
 /* ------------------------------------ */
 void __play()
 {
-  if (millisCurrent - millisOld >= teensyStateRequestInterval)
-  {
-    if (i2chandler.requestIdleState())
-      state = __IDLE;
-
-    millisOld = millisCurrent;
+  if(teensyIsReady.read() == HIGH) {
+    state = __IDLE;
   }
+
+  // if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  // {
+  //   if (i2chandler.requestIdleState())
+  //     state = __IDLE;
+
+  //   millisOld = millisCurrent;
+  // }
 }
 
 /* ------------------------------------ */
@@ -408,7 +420,7 @@ void __hardware_test()
   if (btnB.fallingEdge())
   {
     Serial.println("Button B pressed");
-    i2chandler.requestMotortest();
+    //i2chandler.requestMotortest();
   }
   else if (btnB.risingEdge())
     Serial.println("Button B released");
@@ -482,12 +494,14 @@ void powerSuppliesOff()
 void MediaControllerStart()
 {
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
+  digitalWrite(PIN_PLAY_REQUEST, HIGH);
 }
 
 /* ------------------------------------ */
 void MediaControllerStop()
 {
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
+  digitalWrite(PIN_PLAY_REQUEST, LOW);
 }
 
 /* ------------------------------------ */
