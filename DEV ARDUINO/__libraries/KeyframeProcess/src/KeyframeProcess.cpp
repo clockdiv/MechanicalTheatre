@@ -113,6 +113,18 @@ void listFiles() {
   Serial.println("done.");
 }
 
+void deleteFiles(String filenames[], uint8_t count) {
+  for (int i = 0; i < count; i++) {
+  char filename[filenames[i].length() + 1];
+  filenames[i].toCharArray(filename, sizeof(filename));
+
+    if(SD.exists(filename)) {
+      Serial.print("deleting ");
+      Serial.println(filename);
+      SD.remove(filename);
+    }
+  }
+}
 
 /* ------------------------------------ */
 /* Writes the 2-byte keyframe pairs to  */
@@ -174,9 +186,12 @@ bool read_keyframes_from_file(String _filename, MotorUnit &stepper, uint8_t moto
     char byteLow = file.read();
     char byteHigh = file.read();
     uint16_t value = (byteHigh << 8) + byteLow;
-    //Serial.print(index);
-    //Serial.print(": ");
-    //Serial.println(value);
+    // if(_filename=="CURVE11.DAT" || _filename=="CURVE0.DAT") {
+    //   Serial.print(index);
+    //   Serial.print("-");
+    //   Serial.print(value);
+    //   Serial.print(";");
+    // }
     stepper.setKeyframeValue(index, value);
     index++;
   }
@@ -199,6 +214,6 @@ bool read_all_files(String filenames[], MotorUnit steppers[], uint8_t count) {
   }
   return true;
 }
-
+  
 
 }

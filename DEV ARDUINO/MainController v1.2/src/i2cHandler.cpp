@@ -31,17 +31,20 @@ bool i2cHandler::requestIdleState()
     return false;
 }
 
-bool i2cHandler::requestStart() {
-  // send '1' to teensy to tell it to start
-  Wire.beginTransmission(TEENSY_I2C_ADDR);
-  Wire.write(REQUEST_SHOWSTART);
-  Wire.endTransmission();
+bool i2cHandler::requestStart()
+{
+    Serial.println("Request Start");
+    // send '1' to teensy to tell it to start
+    Wire.beginTransmission(TEENSY_I2C_ADDR);
+    Wire.write(REQUEST_SHOWSTART);
+    Wire.endTransmission();
 
     // send request
     Wire.requestFrom(TEENSY_I2C_ADDR, 1);
     while (Wire.available())
     {
         int c = Wire.read();
+        Serial.println(c);
         if (c == 1)
         {
             return true;
@@ -79,5 +82,3 @@ bool i2cHandler::requestMotortest()
     }
     return false;
 }
-
-

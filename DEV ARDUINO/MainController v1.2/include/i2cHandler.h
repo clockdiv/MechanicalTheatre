@@ -1,6 +1,7 @@
 #ifndef I2CHANDLER_H
 #define I2CHANDLER_H
 
+#include <Arduino.h>
 #include "Wire.h"
 #include "StateMachine.h"
 

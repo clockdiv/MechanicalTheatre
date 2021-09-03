@@ -33,7 +33,7 @@
 #include "i2cHandler.h"
 
 // cross-project includes
-#include "KeyframeProcess.h"
+//#include "KeyframeProcess.h"
 #include "pw.h"
 
 const unsigned long messageScanInterval = 1000; // mean time between scan messages
@@ -151,12 +151,12 @@ void setup()
   // initWiFiAndTelegram();
 
   // Initialize SD-Card
-  if (!FileProcess::initFilesystem())
-  {
-    Serial.println(F("Initialization of FileSystem failed!"));
-    while (true)
-      ;
-  }
+  // if (!FileProcess::initFilesystem())
+  // {
+  //   Serial.println(F("Initialization of FileSystem failed!"));
+  //   while (true)
+  //     ;
+  // }
 
   // Initialize i2c communication
   i2chandler.initI2C();
@@ -224,6 +224,7 @@ void stateEnter()
     {
       delay(1000);
     };
+    Serial.println("starting to play");
 
     MediaControllerStart();
     break;
@@ -258,6 +259,7 @@ void stateExit()
     break;
 
   case __PLAY:
+    MediaControllerStop();
     break;
 
   case __HARDWARE_TEST:

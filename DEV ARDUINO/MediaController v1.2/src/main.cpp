@@ -72,6 +72,7 @@ void stopAudioFile(AudioPlaySdWav &player);
 void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
+void allDMXChannelsOff();
 
 /*-------------------------------*/
 void setup()
@@ -203,6 +204,7 @@ void stateExit()
     break;
 
   case __PLAY:
+    allDMXChannelsOff();
     stopAudioFile(playSdWav1);
     stopAudioFile(playSdWav2);
     break;
@@ -244,19 +246,28 @@ void stopAudioFile(AudioPlaySdWav &player)
 }
 
 /*-------------------------------*/
+void allDMXChannelsOff() {
+  for(int i = 0; i < 512; i++) {
+    dmxTx.set(i, 0);
+  }
+}
+
+/*-------------------------------*/
 void __idle() {
   startStopTrigger.update();
   if(startStopTrigger.risingEdge()) {
     state = __PLAY;
-  } else if (startStopTrigger.fallingEdge()) {
-    state = __IDLE;
   }
-
 }
 
 /*-------------------------------*/
 void __play()
 {
+  startStopTrigger.update();
+  if(startStopTrigger.fallingEdge()) {
+    state = __IDLE;
+  }
+
   if (millisCurrent - frameDuration > millisOld)
   {
     if (!dmxPlayer.eof)
@@ -266,15 +277,15 @@ void __play()
       {
         value = dmxPlayer.playDMXFile();
         if (value < 0) {
-          Serial.println("return < 0");
+          // Serial.println("return < 0");
           break;
         }
         dmxTx.set(dmxPlayer.dmxChannels[i], value);        
-        Serial.print("ch:");
-        Serial.print(dmxPlayer.dmxChannels[i]);
-        Serial.print(" ");
-        Serial.print(value);
-        Serial.print(" ");
+        // Serial.print("ch:");
+        // Serial.print(dmxPlayer.dmxChannels[i]);
+        // Serial.print(" ");
+        // Serial.print(value);
+        // Serial.print(" ");
       }
       // Serial.println();
     } else {

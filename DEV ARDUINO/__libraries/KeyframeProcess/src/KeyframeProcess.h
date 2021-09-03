@@ -33,6 +33,7 @@ int8_t receive_keyframes(String filenames[], uint8_t count);
 /* (we don't need sub-directories here) */
 /* ------------------------------------ */
 void listFiles();
+void deleteFiles(String filenames[], uint8_t count);
 
 /* ------------------------------------ */
 /* Writes the 2-byte keyframe pairs to  */

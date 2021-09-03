@@ -70,6 +70,7 @@ void statusLEDUpdate();
 /* ------------------------------------ */
 void setup()
 {
+  delay(2000);
   pinMode(PIN_EXT_LED, OUTPUT);
 
   // Initialize i2c communication
@@ -243,6 +244,7 @@ void __incoming_serial()
     if (inChar == 'u')
     {
       statusLEDOn();
+      FileProcess::deleteFiles(filenames, UNIT_COUNT);
 
       int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
       if (receiveError == -1)
@@ -330,10 +332,10 @@ void __wait_for_motor_init()
 /* ------------------------------------ */
 void __idle()
 {
-  for (int i = 0; i < UNIT_COUNT; i++)
-  {
-    steppers[i].update();
-  }
+  // for (int i = 0; i < UNIT_COUNT; i++)
+  // {
+  //   steppers[i].update();
+  // }
 }
 
 /* ------------------------------------ */
