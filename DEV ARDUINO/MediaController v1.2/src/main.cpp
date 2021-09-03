@@ -40,9 +40,9 @@ DMXKeyframeProcess dmxPlayer;
 String dmxFileName = "DMX.DAT";
 // timing
 const uint8_t fps = 25;
-long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
-long frameDuration = 1000 / fps;   // duration of a frame in milliseconds
-uint16_t keyframeIndex = 0;        // current position of the timeline, used for playback
+unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
+unsigned long frameDuration = 1000 / fps;   // duration of a frame in milliseconds
+uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
 
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 1000;
@@ -78,8 +78,8 @@ void allDMXChannelsOff();
 void setup()
 {
   pinMode(PIN_EXT_LED, OUTPUT);
- startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT);
- startStopTrigger.interval(25);
+  startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT);
+  startStopTrigger.interval(25);
 
   dmxTx.begin();
   // dmxTx.set(1, 128);
@@ -115,8 +115,7 @@ void setup()
 
 /*-------------------------------*/
 void loop()
-{  
-  millisCurrent = millis();
+{
 
   if (state != stateOld)
   {
@@ -127,6 +126,7 @@ void loop()
     stateEnter();
   }
 
+  millisCurrent = millis();
   statusLEDUpdate();
   smRun();
 }
@@ -143,7 +143,7 @@ void smRun()
     break;
 
   case __IDLE:
-  __idle();
+    __idle();
     break;
 
   case __PLAY:
@@ -175,7 +175,7 @@ void stateEnter()
 
   case __PLAY:
     statusLEDBlinkFrequency = 1000;
-
+    keyframeIndex = 0;
     dmxPlayer.loadFile(dmxFileName);
     playAudioFile("TEST12.WAV", playSdWav1);
     playAudioFile("TEST34.WAV", playSdWav2);
@@ -246,16 +246,20 @@ void stopAudioFile(AudioPlaySdWav &player)
 }
 
 /*-------------------------------*/
-void allDMXChannelsOff() {
-  for(int i = 0; i < 512; i++) {
+void allDMXChannelsOff()
+{
+  for (int i = 0; i < 512; i++)
+  {
     dmxTx.set(i, 0);
   }
 }
 
 /*-------------------------------*/
-void __idle() {
+void __idle()
+{
   startStopTrigger.update();
-  if(startStopTrigger.risingEdge()) {
+  if (startStopTrigger.risingEdge())
+  {
     state = __PLAY;
   }
 }
@@ -263,36 +267,42 @@ void __idle() {
 /*-------------------------------*/
 void __play()
 {
-  startStopTrigger.update();
-  if(startStopTrigger.fallingEdge()) {
-    state = __IDLE;
-  }
-
-  if (millisCurrent - frameDuration > millisOld)
+  if (millisCurrent - frameDuration >= millisOld)
   {
     if (!dmxPlayer.eof)
     {
       int16_t value = 0;
+      // Serial.print(keyframeIndex);
+      // Serial.print(" | ");
       for (int i = 0; i < dmxPlayer.channelCount; i++)
       {
         value = dmxPlayer.playDMXFile();
-        if (value < 0) {
+        if (value < 0)
+        {
           // Serial.println("return < 0");
           break;
         }
-        dmxTx.set(dmxPlayer.dmxChannels[i], value);        
+        dmxTx.set(dmxPlayer.dmxChannels[i], value);
         // Serial.print("ch:");
         // Serial.print(dmxPlayer.dmxChannels[i]);
         // Serial.print(" ");
         // Serial.print(value);
         // Serial.print(" ");
       }
+      // keyframeIndex++;
       // Serial.println();
-    } else {
+    }
+    else
+    {
       state = __IDLE;
     }
-
     millisOld = millisCurrent;
+  }
+
+  startStopTrigger.update();
+  if (startStopTrigger.fallingEdge())
+  {
+    state = __IDLE;
   }
 }
 

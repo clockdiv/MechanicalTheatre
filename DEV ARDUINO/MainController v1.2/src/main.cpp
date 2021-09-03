@@ -169,6 +169,14 @@ void setup()
 /* ------------------------------------ */
 void loop()
 {
+  btnA.update();
+  btnB.update();
+  dipswitch1.update();
+  dipswitch2.update();
+  dipswitch3.update();
+  dipswitch4.update();
+  coinSlotSensor.update();
+
   millisCurrent = millis();
 
   if (state != stateOld)
@@ -355,14 +363,6 @@ void __play()
 /* ------------------------------------ */
 void __idle()
 {
-  btnA.update();
-  btnB.update();
-  dipswitch1.update();
-  dipswitch2.update();
-  dipswitch3.update();
-  dipswitch4.update();
-  coinSlotSensor.update();
-
   // update Telegram Messages
   // if (millis() - bot_lasttime >= messageScanInterval)
   // {
@@ -397,14 +397,6 @@ void __idle()
 /* ------------------------------------ */
 void __hardware_test()
 {
-  btnA.update();
-  btnB.update();
-  dipswitch1.update();
-  dipswitch2.update();
-  dipswitch3.update();
-  dipswitch4.update();
-  coinSlotSensor.update();
-
   if (btnA.fallingEdge())
   {
     Serial.println("Button A pressed");
@@ -427,7 +419,6 @@ void __hardware_test()
   }
   else if (coinSlotSensor.risingEdge())
     Serial.println("CoinSlotSensor released");
-
 
   if (dipswitch1.fallingEdge())
     Serial.println("DipSwitch 1 ON");
@@ -479,6 +470,10 @@ void powerSuppliesOn()
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
+  if (!dipswitch2.read()) { // on-position
+    return;
+  }
+
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
   //delay(1000);
 }
@@ -624,7 +619,7 @@ void sendTelegramMessage(String _message)
 /* ------------------------------------ */
 void buzzerTone(uint8_t signalID)
 {
-  if (dipswitch4.read())
+  if (dipswitch4.read())  // off-position
     return;
 
   switch (signalID)
