@@ -52,29 +52,35 @@ void i2cHandler::requestEvent()
 {
     Serial.println("2) Request");
     Serial.print("already known opcode: ");
-    Serial.println(opcode);
+    Serial.print(opcode);
 
     switch (opcode)
     {
     case REQUEST_IDLESTATE: // "Are you IDLE?"
+        Serial.print(" Request IdleState");
         if (*state == __IDLE)
         {
+            Serial.println(" yes, IDLE, answering with 1");
             Wire.write(1); // sending YES to esp
         }
         else
         {
+            Serial.println(" no, NOT IDLE, answering with 0");
             Wire.write(0); // sending NO to esp
         }
         break;
 
     case REQUEST_SHOWSTART: // "Let's start the show together, or ain't you ready yet?"
+        Serial.print(" Request ShowStart");
         if (*state == __IDLE)
         {
+            Serial.println(" show can start, answering with 1");
             Wire.write(1); // sending YES I'M READY to esp
             *state = __PLAY;
         }
         else
         {
+            Serial.println(" show cannont start, answering with 0");
             Wire.write(0); // sending NOT READY YET to esp
         }
         break;
@@ -88,4 +94,5 @@ void i2cHandler::requestEvent()
         break;
     }
     opcode = 0x00;
+    Serial.println();
 }
