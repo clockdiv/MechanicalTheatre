@@ -125,6 +125,8 @@ void setup()
 /* ------------------------------------ */
 void loop()
 {
+  millisCurrent = millis();
+
   if (state != stateOld)
   {
     Serial.print(F("state:\t\t"));
@@ -133,7 +135,6 @@ void loop()
     stateExit();
     stateEnter();
   }
-  millisCurrent = millis();
 
   statusLEDUpdate();
   smRun();
@@ -341,8 +342,7 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
-
-  if (millisCurrent - frameDuration > millisOld)
+  if (millisCurrent - frameDuration >= millisOld)
   {
 
     keyframeIndex++;
