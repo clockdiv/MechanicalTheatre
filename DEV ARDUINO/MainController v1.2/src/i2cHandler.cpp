@@ -6,9 +6,9 @@ void i2cHandler::initI2C()
 }
 
 bool i2cHandler::requestIdleState()
-{
+{   
     // checks if the teensy is in idle mode and is ready to play the show
-
+    Serial.println("request idle state");
     // set i2c register
     Wire.beginTransmission(TEENSY_I2C_ADDR);
     Wire.write(REQUEST_IDLESTATE);
@@ -19,6 +19,8 @@ bool i2cHandler::requestIdleState()
     while (Wire.available())
     {
         int c = Wire.read();
+        Serial.print("answer: ");
+        Serial.println(c);
         if (c == 1)
         {
             return true;

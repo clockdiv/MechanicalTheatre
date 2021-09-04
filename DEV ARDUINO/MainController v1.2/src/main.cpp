@@ -93,8 +93,8 @@ void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
 
-void MediaControllerStart();
-void MediaControllerStop();
+void MediaControllerStartStopTrigger();
+
 
 void initWiFiAndTelegram();
 void checkTelegramBot();
@@ -136,7 +136,6 @@ void setup()
   coinSlotSensor.interval(DEBOUNCE_TIME);
   // teensyIsReady.interval(5);
 
-  // MediaControllerStop();
   powerSuppliesOff();
   coinslotDisable();
   statusLEDOff();
@@ -163,7 +162,7 @@ void setup()
   // }
 
   // Initialize i2c communication
-  //i2chandler.initI2C();
+  i2chandler.initI2C();
 
   stateOld = __UNDEFINED;
 
@@ -181,6 +180,12 @@ void loop()
   dipswitch4.update();
   coinSlotSensor.update();
   // teensyIsReady.update();
+
+
+  if(btnB.fallingEdge()) {
+    MediaControllerStartStopTrigger();
+  }
+
 
   millisCurrent = millis();
 
@@ -208,7 +213,6 @@ void stateEnter()
   switch (state)
   {
   case __INCOMING_SERIAL:
-    // MediaControllerStop();
     // powerSuppliesOff();
     break;
 
@@ -240,7 +244,7 @@ void stateEnter()
     };
     Serial.println("starting to play");
 
-    MediaControllerStart();
+    MediaControllerStartStopTrigger();
     delay(100);
     break;
 
@@ -274,7 +278,6 @@ void stateExit()
     break;
 
   case __PLAY:
-    //MediaControllerStop();
     break;
 
   case __HARDWARE_TEST:
@@ -418,7 +421,7 @@ void __hardware_test()
   if (btnA.fallingEdge())
   {
     Serial.println("Button A pressed");
-    MediaControllerStart();
+    MediaControllerStartStopTrigger();
   }
   else if (btnA.risingEdge())
     Serial.println("Button A released");
@@ -498,7 +501,7 @@ void powerSuppliesOff()
 }
 
 /* ------------------------------------ */
-void MediaControllerStart()
+void MediaControllerStartStopTrigger()
 {
   Serial.println("media controller start");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
@@ -511,13 +514,6 @@ void MediaControllerStart()
   // teensyIsReady.update();
 }
 
-/* ------------------------------------ */
-void MediaControllerStop()
-{
-  Serial.println("media controller stop");
-  digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
-  // digitalWrite(PIN_PLAY_REQUEST, LOW);
-}
 
 /* ------------------------------------ */
 void coinslotEnable()
