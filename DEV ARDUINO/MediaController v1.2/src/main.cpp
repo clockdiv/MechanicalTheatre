@@ -79,7 +79,7 @@ void setup()
 {
   pinMode(PIN_EXT_LED, OUTPUT);
   startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT);
-  startStopTrigger.interval(25);
+  startStopTrigger.interval(5);
 
   dmxTx.begin();
   // dmxTx.set(1, 128);
@@ -103,7 +103,6 @@ void setup()
   stateOld = __UNDEFINED;
   state = __IDLE;
 
-  delay(2000);
   // Initialize SD-Card
   if (!SD.begin(SDCARD_CS_PIN))
   {
@@ -272,25 +271,25 @@ void __play()
     if (!dmxPlayer.eof)
     {
       int16_t value = 0;
-      // Serial.print(keyframeIndex);
-      // Serial.print(" | ");
+      Serial.print(keyframeIndex);
+      Serial.print(" | ");
       for (int i = 0; i < dmxPlayer.channelCount; i++)
       {
         value = dmxPlayer.playDMXFile();
         if (value < 0)
         {
-          // Serial.println("return < 0");
+          Serial.println("return < 0");
           break;
         }
         dmxTx.set(dmxPlayer.dmxChannels[i], value);
-        // Serial.print("ch:");
-        // Serial.print(dmxPlayer.dmxChannels[i]);
-        // Serial.print(" ");
-        // Serial.print(value);
-        // Serial.print(" ");
+        Serial.print("ch:");
+        Serial.print(dmxPlayer.dmxChannels[i]);
+        Serial.print(" ");
+        Serial.print(value);
+        Serial.print(" ");
       }
-      // keyframeIndex++;
-      // Serial.println();
+      keyframeIndex++;
+      Serial.println();
     }
     else
     {
@@ -300,7 +299,7 @@ void __play()
   }
 
   startStopTrigger.update();
-  if (startStopTrigger.fallingEdge())
+  if (startStopTrigger.risingEdge())
   {
     state = __IDLE;
   }

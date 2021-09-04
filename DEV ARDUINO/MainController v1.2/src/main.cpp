@@ -30,7 +30,7 @@
 // local includes
 #include "Configurations.h"
 #include "StateMachine.h"
-//#include "i2cHandler.h"
+#include "i2cHandler.h"
 
 // cross-project includes
 //#include "KeyframeProcess.h"
@@ -45,13 +45,13 @@ String chat_id = GROUP_ID;
 String telegramMessage_tmp = "";
 
 // communication between microcontrollers
-//i2cHandler i2chandler;
+i2cHandler i2chandler;
 
 // coin slot
 Bounce coinSlotSensor;
 Bounce btnA, btnB;
 Bounce dipswitch1, dipswitch2, dipswitch3, dipswitch4;
-Bounce teensyIsReady;
+// Bounce teensyIsReady;
 
 ESP32_tone toneBuzzer(0);
 
@@ -115,7 +115,7 @@ void setup()
   pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
   pinMode(PIN_MEDIACONTROLLER_TRIGGER, OUTPUT);
-  pinMode(PIN_PLAY_REQUEST, OUTPUT);
+  // pinMode(PIN_PLAY_REQUEST, OUTPUT);
 
   // Inputs
   coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT);
@@ -125,7 +125,7 @@ void setup()
   dipswitch2.attach(PIN_DIPSWITCH_2, INPUT_PULLUP);
   dipswitch3.attach(PIN_DIPSWITCH_3, INPUT_PULLUP);
   dipswitch4.attach(PIN_DIPSWITCH_4, INPUT_PULLUP);
-  teensyIsReady.attach(PIN_IS_READY, INPUT);
+  // teensyIsReady.attach(PIN_IS_READY, INPUT);
 
   btnA.interval(DEBOUNCE_TIME);
   btnB.interval(DEBOUNCE_TIME);
@@ -134,9 +134,9 @@ void setup()
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
   coinSlotSensor.interval(DEBOUNCE_TIME);
-  teensyIsReady.interval(5);
+  // teensyIsReady.interval(5);
 
-  MediaControllerStop();
+  // MediaControllerStop();
   powerSuppliesOff();
   coinslotDisable();
   statusLEDOff();
@@ -180,7 +180,7 @@ void loop()
   dipswitch3.update();
   dipswitch4.update();
   coinSlotSensor.update();
-  teensyIsReady.update();
+  // teensyIsReady.update();
 
   millisCurrent = millis();
 
@@ -233,12 +233,12 @@ void stateEnter()
     
     buzzerTone(BUZZER_START_SHOW);
 
-    // i2chandler.initI2C();
-    // while (!i2chandler.requestStart()) // wait until Teensy is ready
-    // {
-    //   delay(1000);
-    // };
-    // Serial.println("starting to play");
+    i2chandler.initI2C();
+    while (!i2chandler.requestStart()) // wait until Teensy is ready
+    {
+      delay(1000);
+    };
+    Serial.println("starting to play");
 
     MediaControllerStart();
     delay(100);
@@ -346,36 +346,36 @@ void __incoming_serial()
 /* ------------------------------------ */
 void __wait_for_teensy()
 {
-  if (teensyIsReady.read() == HIGH)
-  {
-    state = __IDLE;
-  }
-  // if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  // if (teensyIsReady.read() == HIGH)
   // {
-  //   if (i2chandler.requestIdleState())
-  //     state = __IDLE;
-
-  //   millisOld = millisCurrent;
+  //   state = __IDLE;
   // }
+  if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  {
+    if (i2chandler.requestIdleState())
+      state = __IDLE;
+
+    millisOld = millisCurrent;
+  }
 }
 
 /* ------------------------------------ */
 void __play()
 {
-  teensyIsReady.update();
-  if (teensyIsReady.read() == HIGH)
-  {
-    Serial.println("is high");
-    //state = __IDLE;
-  }
-
-  // if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  // teensyIsReady.update();
+  // if (teensyIsReady.read() == HIGH)
   // {
-  //   if (i2chandler.requestIdleState())
-  //     state = __IDLE;
-
-  //   millisOld = millisCurrent;
+  //   Serial.println("is high");
+  //   //state = __IDLE;
   // }
+
+  if (millisCurrent - millisOld >= teensyStateRequestInterval)
+  {
+    if (i2chandler.requestIdleState())
+      state = __IDLE;
+
+    millisOld = millisCurrent;
+  }
 }
 
 /* ------------------------------------ */
@@ -482,19 +482,19 @@ void __hardware_test()
 void powerSuppliesOn()
 {
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, HIGH);
-  delay(5000);
+  delay(1000);
 }
 
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
-  if (!dipswitch2.read())
-  { // on-position
+  if (dipswitch2.read() == LOW) // on-position
+  { 
     return;
   }
 
   digitalWrite(PIN_RELAIS_POWERSUPPLIES, LOW);
-  //delay(1000);
+  delay(1000);
 }
 
 /* ------------------------------------ */
@@ -502,13 +502,13 @@ void MediaControllerStart()
 {
   Serial.println("media controller start");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
-  digitalWrite(PIN_PLAY_REQUEST, HIGH);
+  // digitalWrite(PIN_PLAY_REQUEST, HIGH);
   delay(20);
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
-  digitalWrite(PIN_PLAY_REQUEST, LOW);
-  delay(100);
+  // digitalWrite(PIN_PLAY_REQUEST, LOW);
+  //delay(100);
 
-  teensyIsReady.update();
+  // teensyIsReady.update();
 }
 
 /* ------------------------------------ */
@@ -516,7 +516,7 @@ void MediaControllerStop()
 {
   Serial.println("media controller stop");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
-  digitalWrite(PIN_PLAY_REQUEST, LOW);
+  // digitalWrite(PIN_PLAY_REQUEST, LOW);
 }
 
 /* ------------------------------------ */
