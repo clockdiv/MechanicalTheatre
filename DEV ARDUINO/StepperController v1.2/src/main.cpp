@@ -74,13 +74,11 @@ void setNotReady();
 /* ------------------------------------ */
 void setup()
 {
-  while (!Serial)
-    ;
-
   pinMode(PIN_EXT_LED, OUTPUT);
   pinMode(PIN_IS_READY, OUTPUT);
   playRequest.attach(PIN_PLAY_REQUEST, INPUT);
   playRequest.interval(5);
+  setNotReady();
 
   // Initialize i2c communication
   // i2chandler.initI2C(&state);
@@ -138,12 +136,12 @@ void loop()
 
   playRequest.update();
 
-  if (sinceDebugMessage >= 500)
-  {
-    Serial.print("state: ");
-    Serial.println(stateStrings[state]);
-    sinceDebugMessage = 0;
-  }
+  // if (sinceDebugMessage >= 500)
+  // {
+  //   Serial.print("playRequest : ");
+  //   Serial.println(playRequest.read());
+  //   sinceDebugMessage = 0;
+  // }
 
   if (state != stateOld)
   {
@@ -164,10 +162,12 @@ void stateEnter()
   switch (state)
   {
   case __RESET:
+    setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
   case __WAIT_FOR_MOTOR_INIT:
+    setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
@@ -175,12 +175,12 @@ void stateEnter()
     setIsReady();
     break;
   case __PLAY:
+    setNotReady();
     statusLEDBlinkFrequency = 1000;
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].setPlay();
     }
-    setNotReady();
     break;
 
   case __HARDWARE_TEST:
@@ -355,7 +355,7 @@ void __wait_for_motor_init()
 /* ------------------------------------ */
 void __idle()
 {
-  if (playRequest.risingEdge())
+  if (playRequest.read() == HIGH)
   {
     state = __PLAY;
   }
@@ -368,15 +368,11 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
-  if(playRequest.fallingEdge()){
-    state = __RESET;
-    return;
-  }
   if (millisCurrent - frameDuration >= millisOld)
   {
 
     keyframeIndex++;
-    Serial.println(keyframeIndex);
+    //Serial.println(keyframeIndex);
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].moveToFramePosition(keyframeIndex);

@@ -30,11 +30,11 @@
 #define STEPPER_6_RESET_SPEED   2500
 #define STEPPER_6_IS_INVERTED   0
 
-#define STEPPER_7_INIT_POS      50
+#define STEPPER_7_INIT_POS      70
 #define STEPPER_7_RESET_SPEED   500
 #define STEPPER_7_IS_INVERTED   0   // unknown yet
 
-#define STEPPER_8_INIT_POS      50
+#define STEPPER_8_INIT_POS      70
 #define STEPPER_8_RESET_SPEED   500
 #define STEPPER_8_IS_INVERTED   0   // unknown yet
 
@@ -96,7 +96,7 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
 const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {0,  // Ufo_X-Axis
                                                       0,  // Ufo_Y-Axis
                                                       1,  // Schwaene_schwimmen
-                                                      0,  // Schwaene_tauchen
+                                                      1,  // Schwaene_tauchen
                                                       1,  // Pferde_1
                                                       1,  // Pferde_2
                                                       1,  // Reiter_1

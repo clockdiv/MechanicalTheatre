@@ -10,6 +10,7 @@ public:
     static uint16_t frameCount;   // size of incoming data package
     static uint16_t channelCount; // the number of curves/timelines to receive (each stepper one curve)
     static uint16_t dmxChannels[512];
+    static char dmxValues[512];
     static File dmxFile;
     static bool eof;
 
