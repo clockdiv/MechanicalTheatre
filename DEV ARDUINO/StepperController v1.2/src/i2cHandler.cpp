@@ -13,14 +13,17 @@ void i2cHandler::initI2C(states *_state)
 
 void i2cHandler::receiveEvent(int bytes)
 {
-    Serial.println("1) receive Event");
-    Serial.print("Bytes: ");
-    Serial.println(bytes);
+     Serial.print(".");
+   // Serial.println("1) receive Event");
+    // Serial.print("Bytes: ");
+    // Serial.println(bytes);
     // sets the register
     opcode = 0x00;
     opcode = Wire.read();
-    Serial.print("OPCode: ");
-    Serial.println(opcode);
+    // Serial.print("OPCode: ");
+    // Serial.println(opcode);
+
+
     // // If there are more than 1 byte, then the master is writing to the slave
     // // (not needed here atm)
 
@@ -50,37 +53,41 @@ void i2cHandler::receiveEvent(int bytes)
 
 void i2cHandler::requestEvent()
 {
-    Serial.println("2) Request");
-    Serial.print("already known opcode: ");
-    Serial.print(opcode);
-
+    // Serial.println("2) Request");
+    // Serial.print("already known opcode: ");
+    // Serial.print(opcode);
+    Serial.print(".");
     switch (opcode)
     {
     case REQUEST_IDLESTATE: // "Are you IDLE?"
-        Serial.print(" Request IdleState");
+        // Serial.print(" Request IdleState");
         if (*state == __IDLE)
         {
-            Serial.println(" yes, IDLE, answering with 1");
+            // Serial.println(" yes, IDLE, answering with 1");
             Wire.write(1); // sending YES to esp
+        }
+        else if (*state == __RESET || *state == __WAIT_FOR_MOTOR_INIT)
+        {
+            Wire.write(2);
         }
         else
         {
-            Serial.println(" no, NOT IDLE, answering with 0");
+            // Serial.println(" no, NOT IDLE, answering with 0");
             Wire.write(0); // sending NO to esp
         }
         break;
 
     case REQUEST_SHOWSTART: // "Let's start the show together, or ain't you ready yet?"
-        Serial.print(" Request ShowStart");
+        // Serial.print(" Request ShowStart");
         if (*state == __IDLE)
         {
-            Serial.println(" show can start, answering with 1");
+            // Serial.println(" show can start, answering with 1");
             Wire.write(1); // sending YES I'M READY to esp
             *state = __PLAY;
         }
         else
         {
-            Serial.println(" show cannont start, answering with 0");
+            // Serial.println(" show cannont start, answering with 0");
             Wire.write(0); // sending NOT READY YET to esp
         }
         break;

@@ -19,11 +19,11 @@
 #endif
 
 #include <Arduino.h>
-#include <Bounce2.h>
+// #include <Bounce2.h>
 // local includes
 #include "Configurations12.h"
 #include "StateMachine.h"
-// #include "i2cHandler.h"
+#include "i2cHandler.h"
 
 // cross-project includes
 #include "MotorUnit.h"
@@ -35,7 +35,7 @@ uint16_t errorCode = 0;
 MotorUnit steppers[UNIT_COUNT];
 
 // communication
-// i2cHandler i2chandler;
+i2cHandler i2chandler;
 
 // timing
 long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
@@ -46,12 +46,12 @@ unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 0;
 bool statusLEDstate = false;
 
-Bounce playRequest;
+// Bounce playRequest;
 
 states state;
 states stateOld;
 
-elapsedMillis sinceDebugMessage;
+elapsedMillis sinceDebugMessage, debugNextState;
 
 // function declarations
 void smRun();
@@ -68,20 +68,21 @@ void __error();
 void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
-void setIsReady();
-void setNotReady();
+// void setIsReady();
+// void setNotReady();
 
 /* ------------------------------------ */
 void setup()
 {
+  delay(5000);
   pinMode(PIN_EXT_LED, OUTPUT);
-  pinMode(PIN_IS_READY, OUTPUT);
-  playRequest.attach(PIN_PLAY_REQUEST, INPUT);
-  playRequest.interval(5);
-  setNotReady();
+  // pinMode(PIN_IS_READY, OUTPUT);
+  // playRequest.attach(PIN_PLAY_REQUEST, INPUT);
+  // playRequest.interval(5);
+  // setNotReady();
 
   // Initialize i2c communication
-  // i2chandler.initI2C(&state);
+  i2chandler.initI2C(&state);
 
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++)
@@ -134,7 +135,7 @@ void loop()
 {
   millisCurrent = millis();
 
-  playRequest.update();
+  // playRequest.update();
 
   // if (sinceDebugMessage >= 500)
   // {
@@ -162,20 +163,22 @@ void stateEnter()
   switch (state)
   {
   case __RESET:
-    setNotReady();
+    // setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
   case __WAIT_FOR_MOTOR_INIT:
-    setNotReady();
+    // setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
   case __IDLE:
-    setIsReady();
+    // setIsReady();
     break;
   case __PLAY:
-    setNotReady();
+    // setNotReady();
+    keyframeIndex = 0;
+    debugNextState = 0;
     statusLEDBlinkFrequency = 1000;
     for (int i = 0; i < UNIT_COUNT; i++)
     {
@@ -331,6 +334,11 @@ void __reset()
 /* ------------------------------------ */
 void __wait_for_motor_init()
 {
+  if (debugNextState >= 10000)
+  {
+    state = __IDLE;
+  }
+
   for (int i = 0; i < UNIT_COUNT; i++)
   {
     steppers[i].update();
@@ -355,10 +363,11 @@ void __wait_for_motor_init()
 /* ------------------------------------ */
 void __idle()
 {
-  if (playRequest.read() == HIGH)
-  {
-    state = __PLAY;
-  }
+  // if (playRequest.read() == HIGH)
+  // {
+  //   state = __PLAY;
+  // }
+
   // for (int i = 0; i < UNIT_COUNT; i++)
   // {
   //   steppers[i].update();
@@ -368,6 +377,13 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
+  if (debugNextState >= 10000)
+  {
+    Serial.println("10s vorbei");
+    debugNextState = 0;
+    state = __RESET;
+  }
+
   if (millisCurrent - frameDuration >= millisOld)
   {
 
@@ -387,7 +403,6 @@ void __play()
     if (keyframeIndex == steppers[0].animationLength - 1)
     {
       //buzzer_beep(1, 200);
-
       state = __RESET;
     }
 
@@ -470,14 +485,14 @@ void statusLEDUpdate()
   }
 }
 
-/* ------------------------------------ */
-void setIsReady()
-{
-  digitalWrite(PIN_IS_READY, HIGH);
-}
+// /* ------------------------------------ */
+// void setIsReady()
+// {
+//   digitalWrite(PIN_IS_READY, HIGH);
+// }
 
-/* ------------------------------------ */
-void setNotReady()
-{
-  digitalWrite(PIN_IS_READY, LOW);
-}
+// /* ------------------------------------ */
+// void setNotReady()
+// {
+//   digitalWrite(PIN_IS_READY, LOW);
+// }
