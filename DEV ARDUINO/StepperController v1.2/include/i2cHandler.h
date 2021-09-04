@@ -1,8 +1,7 @@
 #ifndef I2CHANDLER_H
 #define I2CHANDLER_H
 
-//#include "i2c_driver_wire.h"
-#include <Wire.h>
+#include "i2c_driver_wire.h"
 #include "StateMachine.h"
 
 #define TEENSY_I2C_ADDR 0x10

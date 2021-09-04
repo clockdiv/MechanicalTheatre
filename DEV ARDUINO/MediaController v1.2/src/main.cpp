@@ -77,9 +77,10 @@ void allDMXChannelsOff();
 /*-------------------------------*/
 void setup()
 {
-  while(!Serial);
+  //while(!Serial);
+  delay(2000);
   pinMode(PIN_EXT_LED, OUTPUT);
-  startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT);
+  startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT_PULLDOWN);
   startStopTrigger.interval(5);
 
   dmxTx.begin();
@@ -102,7 +103,7 @@ void setup()
   SPI.setSCK(SDCARD_SCK_PIN);
 
   stateOld = __UNDEFINED;
-  state = __PLAY;
+  state = __IDLE;
 
   // Initialize SD-Card
   if (!SD.begin(SDCARD_CS_PIN))
@@ -178,6 +179,7 @@ void stateEnter()
     statusLEDBlinkFrequency = 1000;
     keyframeIndex = 0;
     dmxPlayer.loadFile(dmxFileName);
+    delay(10);
     playAudioFile("TEST12.WAV", playSdWav1);
     playAudioFile("TEST34.WAV", playSdWav2);
     break;
@@ -221,8 +223,11 @@ void stateExit()
 /*-------------------------------*/
 void playAudioFile(const char *filename, AudioPlaySdWav &player)
 {
-  if (player.isPlaying())
+  if (player.isPlaying()) {
+   // Serial.println("player is already playing");
     return;
+
+  }
 
   // Serial.print("Playing file: ");
   // Serial.println(filename);
@@ -235,9 +240,9 @@ void playAudioFile(const char *filename, AudioPlaySdWav &player)
   delay(5);
   return;
   // Simply wait for the file to finish playing.
-  while (player.isPlaying())
-  {
-  }
+  // while (player.isPlaying())
+  // {
+  // }
 }
 
 /*-------------------------------*/
@@ -274,7 +279,7 @@ void __play()
     {
       //int16_t value = 0;
       Serial.print(keyframeIndex);
-      Serial.print(F(" | "));
+      // Serial.print(F(" | "));
     
       dmxPlayer.playDMXFile();
 
@@ -286,12 +291,12 @@ void __play()
         //   break;
         // }
         dmxTx.set(dmxPlayer.dmxChannels[i], uint8_t(dmxPlayer.dmxValues[i] ));
-        Serial.print(F("ch:")); 
+        // Serial.print(F("ch:")); 
         
-        Serial.print(dmxPlayer.dmxChannels[i]);
-        Serial.print(F(" "));
-        Serial.print( uint8_t(dmxPlayer.dmxValues[i]), DEC);
-        Serial.print(F(" "));
+        // Serial.print(dmxPlayer.dmxChannels[i]);
+        // Serial.print(F(" "));
+        // Serial.print( uint8_t(dmxPlayer.dmxValues[i]), DEC);
+        // Serial.print(F(" "));
       }
       keyframeIndex++;
       Serial.println();
@@ -303,11 +308,10 @@ void __play()
     millisOld = millisCurrent;
   }
 
-  startStopTrigger.update();
-  if (startStopTrigger.risingEdge())
-  {
-    state = __IDLE;
-  }
+  // if (startStopTrigger.risingEdge())
+  // {
+  //   state = __IDLE;
+  // }
 }
 
 /* ------------------------------------ */
