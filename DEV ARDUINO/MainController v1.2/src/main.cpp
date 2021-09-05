@@ -71,6 +71,8 @@ states stateOld;
 bool startFromTelegram = false;
 uint16_t showCounter = 0;
 
+uint16_t i2cTestCounter = 0, i2cTestCounter2 = 0;
+
 // function declarations
 void smRun();
 void stateEnter();
@@ -94,7 +96,6 @@ void statusLEDOff();
 void statusLEDUpdate();
 
 void MediaControllerStartStopTrigger();
-
 
 void initWiFiAndTelegram();
 void checkTelegramBot();
@@ -181,11 +182,10 @@ void loop()
   coinSlotSensor.update();
   // teensyIsReady.update();
 
-
-  if(btnB.fallingEdge()) {
+  if (btnB.fallingEdge())
+  {
     MediaControllerStartStopTrigger();
   }
-
 
   millisCurrent = millis();
 
@@ -222,6 +222,8 @@ void stateEnter()
     break;
 
   case __IDLE:
+    i2cTestCounter2 = 0;
+    i2cTestCounter = 0;
     powerSuppliesOff();
     coinslotEnable();
     millisIdle = millis();
@@ -234,13 +236,14 @@ void stateEnter()
     // sendTelegramMessage(telegramMessage_tmp);
 
     powerSuppliesOn();
-    
+
     buzzerTone(BUZZER_START_SHOW);
 
-    i2chandler.initI2C();
-    while (!i2chandler.requestStart()) // wait until Teensy is ready
+    while (true) // wait until Teensy is ready
     {
-      delay(1000);
+      if (i2chandler.requestStart())
+        break;
+      delay(3000);
     };
     Serial.println("starting to play");
 
@@ -392,6 +395,23 @@ void __idle()
   //   bot_lasttime = millis();
   // }
 
+  if (i2cTestCounter < 1000)
+  {
+    i2cTestCounter++;
+    if (i2chandler.requestTest())
+    {
+      i2cTestCounter2++;
+    }
+    if (i2cTestCounter % 100 == 0)
+    {
+      Serial.print("\ntests sent: ");
+      Serial.println(i2cTestCounter);
+      Serial.print("correct answers: ");
+      Serial.println(i2cTestCounter2);
+    }
+    delay(1);
+  }
+
   bool _play = false;
   bool _repeatShow = !dipswitch1.read();
 
@@ -492,7 +512,7 @@ void powerSuppliesOn()
 void powerSuppliesOff()
 {
   if (dipswitch2.read() == LOW) // on-position
-  { 
+  {
     return;
   }
 
@@ -513,7 +533,6 @@ void MediaControllerStartStopTrigger()
 
   // teensyIsReady.update();
 }
-
 
 /* ------------------------------------ */
 void coinslotEnable()
