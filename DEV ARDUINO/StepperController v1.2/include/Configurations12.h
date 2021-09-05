@@ -93,7 +93,7 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
                                                       -1,  // Vorhang
                                                       -1 };// Magd
 
-const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {0,  // Ufo_X-Axis
+const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {1,  // Ufo_X-Axis
                                                       0,  // Ufo_Y-Axis
                                                       1,  // Schwaene_schwimmen
                                                       1,  // Schwaene_tauchen

@@ -8,6 +8,7 @@
 #define REQUEST_IDLESTATE 0x01
 #define REQUEST_SHOWSTART 0x02
 #define REQUEST_MOTORTEST 0x03
+#define REQUEST_TEST_MSG 0x10
 
 class i2cHandler
 {
