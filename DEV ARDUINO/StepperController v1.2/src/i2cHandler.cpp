@@ -13,8 +13,7 @@ void i2cHandler::initI2C(states *_state)
 
 void i2cHandler::receiveEvent(int bytes)
 {
-     Serial.print(".");
-   // Serial.println("1) receive Event");
+    // Serial.println("1) receive Event");
     // Serial.print("Bytes: ");
     // Serial.println(bytes);
     // sets the register
@@ -22,7 +21,6 @@ void i2cHandler::receiveEvent(int bytes)
     opcode = Wire.read();
     // Serial.print("OPCode: ");
     // Serial.println(opcode);
-
 
     // // If there are more than 1 byte, then the master is writing to the slave
     // // (not needed here atm)
@@ -56,7 +54,6 @@ void i2cHandler::requestEvent()
     // Serial.println("2) Request");
     // Serial.print("already known opcode: ");
     // Serial.print(opcode);
-    Serial.print(".");
     switch (opcode)
     {
     case REQUEST_IDLESTATE: // "Are you IDLE?"
@@ -97,9 +94,12 @@ void i2cHandler::requestEvent()
         Wire.write(1);
         break;
 
+    case REQUEST_TEST_MSG:
+        Wire.write(33);
+        break;
+
     default:
         break;
     }
     opcode = 0x00;
-    Serial.println();
 }

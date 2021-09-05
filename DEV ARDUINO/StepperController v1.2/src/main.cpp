@@ -336,6 +336,8 @@ void __wait_for_motor_init()
 {
   if (debugNextState >= 10000)
   {
+    Serial.println("10s vorbei");
+    debugNextState = 0;
     state = __IDLE;
   }
 
@@ -377,12 +379,12 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
-  if (debugNextState >= 10000)
-  {
-    Serial.println("10s vorbei");
-    debugNextState = 0;
-    state = __RESET;
-  }
+  // if (debugNextState >= 10000)
+  // {
+  //   Serial.println("10s vorbei");
+  //   debugNextState = 0;
+  //   state = __RESET;
+  // }
 
   if (millisCurrent - frameDuration >= millisOld)
   {
