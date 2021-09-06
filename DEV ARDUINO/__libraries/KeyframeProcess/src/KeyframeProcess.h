@@ -8,10 +8,9 @@
 #include "SPIFFS.h"
 #endif
 
+#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 #include "MotorUnit.h"
-
-#define MAX_FRAMES 3000     // maximum number of frames, used to initialize the keyframeValues-array
 
 namespace FileProcess {
 

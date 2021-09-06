@@ -4,13 +4,26 @@ uint8_t MotorUnit::fps = 25;
 uint16_t MotorUnit::maxStepperSpeed = 6000;
 
 /* ------------------------------------ */
-String MotorUnit::stateStrings[] = {
-    "IDLE",
-    "GOING TO END SWITCH",
-    "ENDSWITCH PRESSED",
-    "GOING TO INIT",
-    "DRIVING SHOW",
-    "ENDSWITCH ERROR"};
+// String MotorUnit::stateStrings[] = {
+//     "IDLE",
+//     "GOING TO END SWITCH",
+//     "ENDSWITCH PRESSED",
+//     "GOING TO INIT",
+//     "DRIVING SHOW",
+//     "TESTDRIVE",
+//     "ENDSWITCH ERROR",
+//     "UNDEFINED" };
+
+std::map<MotorUnit::states, String> MotorUnit::stateStringsMap = {{__IDLE, "IDLE"},
+                                                                  {__GOING_TO_ENDSWITCH, "GOING TO END SWITCH"},
+                                                                  {__ENDSWITCH_PRESSED, "ENDSWITCH PRESSED"},
+                                                                  {__GOING_TO_INIT, "GOING TO INIT"},
+                                                                  {__DRIVING_SHOW, "DRIVING SHOW"},
+                                                                  {__TESTDRIVE, "TESTDRIVE"},
+                                                                  {__ENDSWITCH_ERROR, "ENDSWITCH ERROR"},
+                                                                  {__UNDEFINED, "UNDEFINED"}
+
+};
 
 /* ------------------------------------ */
 MotorUnit::MotorUnit()
@@ -76,7 +89,8 @@ void MotorUnit::update()
 {
   if (motorState != motorStateOld)
   {
-    printMessage(stateStrings[motorState]);
+    // printMessage(stateStrings[motorState]);
+    printMessage(stateToString(motorState));
   }
 
   endswitch.update();
@@ -116,6 +130,7 @@ void MotorUnit::smRun()
     break;
 
   case __ENDSWITCH_ERROR:
+    endswitchError();
     break;
 
   case __UNDEFINED:
@@ -189,7 +204,9 @@ void MotorUnit::drivingShow()
 }
 
 /* ------------------------------------ */
-void MotorUnit::endswitchError() {}
+void MotorUnit::endswitchError()
+{
+}
 
 /* ------------------------------------ */
 void MotorUnit::printMessage(String msg)
@@ -197,6 +214,19 @@ void MotorUnit::printMessage(String msg)
   Serial.print(motorName);
   Serial.print("\t");
   Serial.println(msg);
+}
+
+/* ------------------------------------ */
+String MotorUnit::stateToString(states _state)
+{
+  if (stateStringsMap.find(_state) != stateStringsMap.end())
+  {
+    return stateStringsMap[_state];
+  }
+  else
+  {
+    return "state does not have a name";
+  }
 }
 
 /* ------------------------------------ */

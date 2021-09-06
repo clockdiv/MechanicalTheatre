@@ -235,14 +235,15 @@ void stateEnter()
     // telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
     // sendTelegramMessage(telegramMessage_tmp);
 
-    powerSuppliesOn();
-
     buzzerTone(BUZZER_START_SHOW);
+
+    powerSuppliesOn();
 
     while (true) // wait until Teensy is ready
     {
       if (i2chandler.requestStart())
         break;
+
       delay(3000);
     };
     Serial.println("starting to play");
@@ -352,35 +353,78 @@ void __incoming_serial()
 /* ------------------------------------ */
 void __wait_for_teensy()
 {
-  // if (teensyIsReady.read() == HIGH)
-  // {
-  //   state = __IDLE;
-  // }
   if (millisCurrent - millisOld >= teensyStateRequestInterval)
   {
-    if (i2chandler.requestIdleState())
-      state = __IDLE;
-
     millisOld = millisCurrent;
+    int8_t teensyState = i2chandler.requestState();
+
+    switch (teensyState)
+    {
+    case 1:
+      Serial.println("Teensy is resetting all motors");
+      break;
+
+    case 2:
+      Serial.println("Teensy is waiting for it's motors to init");
+      break;
+
+    case 3:
+      state = __IDLE;
+      break;
+
+    case 6:
+      Serial.println("Teensy is in Error State :(");
+      break;
+
+    default:
+      Serial.print("Teensy is in another state?!: ");
+      Serial.println(teensyState);
+      break;
+    }
   }
 }
 
 /* ------------------------------------ */
 void __play()
 {
-  // teensyIsReady.update();
-  // if (teensyIsReady.read() == HIGH)
-  // {
-  //   Serial.println("is high");
-  //   //state = __IDLE;
-  // }
-
   if (millisCurrent - millisOld >= teensyStateRequestInterval)
   {
-    if (i2chandler.requestIdleState())
-      state = __IDLE;
-
     millisOld = millisCurrent;
+    int8_t teensyState = i2chandler.requestState();
+
+    switch (teensyState)
+    {
+    case -1:
+      Serial.println(F("Teensy not responding"));
+      break;
+
+    case 0:
+      Serial.println(F("Serial Data is being uploaded to Teensy"));
+      break;
+
+    case 1:
+    case 2:
+    case 3:
+      state = __WAIT_FOR_TEENSY;
+      break;
+
+    case 4:
+      // Serial.println("Teensy is playing the show");
+      break;
+
+    case 5:
+      // Serial.println("Teensy is in Hardware Test Mode");
+      break;
+
+    case 6:
+      Serial.println(F("Teensy is in Error State :("));
+      break;
+
+    default:
+      Serial.print(F("Teensy is in another state?!: "));
+      Serial.println(teensyState);
+      break;
+    }
   }
 }
 
@@ -395,6 +439,8 @@ void __idle()
   //   bot_lasttime = millis();
   // }
 
+  // test to see if i2c works fine. result: seems to work really fine.
+  /*
   if (i2cTestCounter < 1000)
   {
     i2cTestCounter++;
@@ -402,7 +448,7 @@ void __idle()
     {
       i2cTestCounter2++;
     }
-    if (i2cTestCounter % 100 == 0)
+    if (i2cTestCounter % 500 == 0)
     {
       Serial.print("\ntests sent: ");
       Serial.println(i2cTestCounter);
@@ -411,6 +457,7 @@ void __idle()
     }
     delay(1);
   }
+  */
 
   bool _play = false;
   bool _repeatShow = !dipswitch1.read();
@@ -419,7 +466,7 @@ void __idle()
   {
     _play = true;
   }
-  else if (_repeatShow && (millis() - millisIdle > 10000))
+  else if (_repeatShow && (millis() - millisIdle > 5000))
   {
     _play = true;
   }

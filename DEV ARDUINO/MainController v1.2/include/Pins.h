@@ -9,8 +9,6 @@
 #define PIN_RELAIS_COINSLOT         16
 #define PIN_RELAIS_POWERSUPPLIES    4
 #define PIN_MEDIACONTROLLER_TRIGGER 13
-// #define PIN_PLAY_REQUEST            21  // SDA Output
-
 
 // inputs
 #define PIN_ENDSWITCH_GLOBAL    34
@@ -21,7 +19,6 @@
 #define PIN_DIPSWITCH_2         5
 #define PIN_DIPSWITCH_3         18 
 #define PIN_DIPSWITCH_4         19 
-// #define PIN_IS_READY            22  // SCL Input
 
 // stepper motor Out-Of-Order Schild
 #define STEPPER_13_ENDSWITCH_PIN 25

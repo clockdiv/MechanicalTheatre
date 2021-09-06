@@ -18,8 +18,10 @@
 #error "teensy 4.1 needed for this project."
 #endif
 
+#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
+
+
 #include <Arduino.h>
-// #include <Bounce2.h>
 // local includes
 #include "Configurations12.h"
 #include "StateMachine.h"
@@ -38,9 +40,9 @@ MotorUnit steppers[UNIT_COUNT];
 i2cHandler i2chandler;
 
 // timing
-long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
-long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
-uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
+unsigned long millisOld = 0, millisCurrent;          // meassuring time to get into the fps-rhythm
+unsigned long frameDuration = 1000 / MotorUnit::fps; // duration of a frame in milliseconds
+uint16_t keyframeIndex = 0;                          // current position of the timeline, used for playback
 
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 0;
@@ -51,7 +53,7 @@ bool statusLEDstate = false;
 states state;
 states stateOld;
 
-elapsedMillis sinceDebugMessage, debugNextState;
+elapsedMillis sinceDebugMessage, enterNextStateAfterMillis;
 
 // function declarations
 void smRun();
@@ -68,21 +70,14 @@ void __error();
 void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
-// void setIsReady();
-// void setNotReady();
 
 /* ------------------------------------ */
 void setup()
 {
-  delay(5000);
   pinMode(PIN_EXT_LED, OUTPUT);
-  // pinMode(PIN_IS_READY, OUTPUT);
-  // playRequest.attach(PIN_PLAY_REQUEST, INPUT);
-  // playRequest.interval(5);
-  // setNotReady();
 
   // Initialize i2c communication
-  i2chandler.initI2C(&state);
+  i2cHandler::initI2C(&state);
 
   // Initialize Motors
   for (int i = 0; i < UNIT_COUNT; i++)
@@ -135,13 +130,12 @@ void loop()
 {
   millisCurrent = millis();
 
-  // playRequest.update();
-
-  // if (sinceDebugMessage >= 500)
+  // if (sinceDebugMessage > 1000)
   // {
-  //   Serial.print("playRequest : ");
-  //   Serial.println(playRequest.read());
   //   sinceDebugMessage = 0;
+  //   Serial.print(F("current State: "));
+  //   Serial.print(state);
+  //   Serial.println(stateStrings[state]);
   // }
 
   if (state != stateOld)
@@ -155,30 +149,35 @@ void loop()
 
   statusLEDUpdate();
   smRun();
+
+  if (i2chandler.stateChange)
+  {
+    state = i2chandler.stateNext;
+    Serial.println(F("change state after i2c request"));
+    i2chandler.stateChange = false;
+  }
 }
 
 /* ------------------------------------ */
 void stateEnter()
 {
+  enterNextStateAfterMillis = 0;
+
   switch (state)
   {
   case __RESET:
-    // setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
   case __WAIT_FOR_MOTOR_INIT:
-    // setNotReady();
     statusLEDBlinkFrequency = 100;
     break;
 
   case __IDLE:
-    // setIsReady();
     break;
+
   case __PLAY:
-    // setNotReady();
     keyframeIndex = 0;
-    debugNextState = 0;
     statusLEDBlinkFrequency = 1000;
     for (int i = 0; i < UNIT_COUNT; i++)
     {
@@ -192,6 +191,7 @@ void stateEnter()
       steppers[i].setTestDrive();
     }
     break;
+
   default:
     break;
   }
@@ -293,6 +293,7 @@ void __incoming_serial()
 
       // read all files after they are received and reset the animation
       FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+      delay(100);
       keyframeIndex = 0;
       state = __RESET;
     }
@@ -334,10 +335,9 @@ void __reset()
 /* ------------------------------------ */
 void __wait_for_motor_init()
 {
-  if (debugNextState >= 10000)
+  if (enterNextStateAfterMillis >= 10000)
   {
-    Serial.println("10s vorbei");
-    debugNextState = 0;
+    Serial.println("(WAIT_FOR_MOTOR_INIT) entering next state (->IDLE) after debug-timeout");
     state = __IDLE;
   }
 
@@ -365,11 +365,6 @@ void __wait_for_motor_init()
 /* ------------------------------------ */
 void __idle()
 {
-  // if (playRequest.read() == HIGH)
-  // {
-  //   state = __PLAY;
-  // }
-
   // for (int i = 0; i < UNIT_COUNT; i++)
   // {
   //   steppers[i].update();
@@ -379,18 +374,18 @@ void __idle()
 /* ------------------------------------ */
 void __play()
 {
-  // if (debugNextState >= 10000)
+  // if (enterNextStateAfterMillis >= 10000)
   // {
   //   Serial.println("10s vorbei");
-  //   debugNextState = 0;
   //   state = __RESET;
   // }
 
   if (millisCurrent - frameDuration >= millisOld)
   {
-
     keyframeIndex++;
-    //Serial.println(keyframeIndex);
+    Serial.print(F("keyframeindex: "));
+    Serial.println(keyframeIndex);
+
     for (int i = 0; i < UNIT_COUNT; i++)
     {
       steppers[i].moveToFramePosition(keyframeIndex);
@@ -404,11 +399,12 @@ void __play()
 
     if (keyframeIndex == steppers[0].animationLength - 1)
     {
-      //buzzer_beep(1, 200);
       state = __RESET;
     }
 
     millisOld = millisCurrent;
+
+    // delay(5);
   }
 
   for (int i = 0; i < UNIT_COUNT; i++)
@@ -453,7 +449,7 @@ void __error()
   for (int i = 0; i < blinkCount; i++)
   {
     statusLEDOn();
-    delay(100);
+    delay(50);
     statusLEDOff();
     delay(100);
   }
@@ -486,15 +482,3 @@ void statusLEDUpdate()
     }
   }
 }
-
-// /* ------------------------------------ */
-// void setIsReady()
-// {
-//   digitalWrite(PIN_IS_READY, HIGH);
-// }
-
-// /* ------------------------------------ */
-// void setNotReady()
-// {
-//   digitalWrite(PIN_IS_READY, LOW);
-// }

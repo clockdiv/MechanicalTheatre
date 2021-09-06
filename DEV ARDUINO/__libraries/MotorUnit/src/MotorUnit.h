@@ -2,10 +2,11 @@
 #define MotorUnit_h
 
 #include <Arduino.h>
+#include <map>
 #include "Bounce2.h"
 #include "AccelStepper.h"
 
-#define MAX_FRAMES 3000     // maximum number of frames, used to initialize the keyframeValues-array
+#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 class MotorUnit {
   private:
@@ -20,10 +21,14 @@ class MotorUnit {
       __UNDEFINED
     };
 
+
+
     AccelStepper stepper;
     MotorUnit* motorResetDependency;  // can be a motor that *this* motor waits for until it's resetting
     Bounce endswitch;
-    static String stateStrings[];
+    // static String stateStrings[states::COUNT];
+    static std::map<states, String> stateStringsMap;
+
     uint8_t pinDir;
     uint8_t pinStep;
     uint16_t initPosition;  // the distance from end-switch to init-position
@@ -39,9 +44,11 @@ class MotorUnit {
     void drivingShow();
     void endswitchError();
     void printMessage(String msg);
+    String stateToString(states _state);
 
     bool invertedEndswitch;
     bool readEndswitch();
+
 
   public:
     String motorName;

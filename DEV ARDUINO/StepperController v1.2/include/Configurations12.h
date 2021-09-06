@@ -1,5 +1,6 @@
 #ifndef CONFIGURATIONS12_H
 #define CONFIGURATIONS12_H
+
 #include <Arduino.h>
 #include "Pins.h"
 
@@ -93,14 +94,27 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
                                                       -1,  // Vorhang
                                                       -1 };// Magd
 
+// const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {1,  // Ufo_X-Axis
+//                                                       0,  // Ufo_Y-Axis
+//                                                       1,  // Schwaene_schwimmen
+//                                                       1,  // Schwaene_tauchen
+//                                                       1,  // Pferde_1
+//                                                       1,  // Pferde_2
+//                                                       1,  // Reiter_1
+//                                                       1,  // Reiter_2
+//                                                       0,  // Luftpumpe
+//                                                       0,  // Halbkugel
+//                                                       0,  // Vorhang
+//                                                       0 };// Magd
+
 const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {1,  // Ufo_X-Axis
                                                       0,  // Ufo_Y-Axis
-                                                      1,  // Schwaene_schwimmen
-                                                      1,  // Schwaene_tauchen
-                                                      1,  // Pferde_1
-                                                      1,  // Pferde_2
-                                                      1,  // Reiter_1
-                                                      1,  // Reiter_2
+                                                      0,  // Schwaene_schwimmen
+                                                      0,  // Schwaene_tauchen
+                                                      0,  // Pferde_1
+                                                      0,  // Pferde_2
+                                                      0,  // Reiter_1
+                                                      0,  // Reiter_2
                                                       0,  // Luftpumpe
                                                       0,  // Halbkugel
                                                       0,  // Vorhang
