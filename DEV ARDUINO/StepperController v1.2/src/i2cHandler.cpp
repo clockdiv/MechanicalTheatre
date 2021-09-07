@@ -39,6 +39,15 @@ void i2cHandler::requestEvent()
             stateNext = __PLAY;
         }
         break;
+        
+    case REQUEST_SHOWSTOP:
+        Wire.write(*state);
+        if(*state == __PLAY)
+        {
+            stateChange = true;
+            stateNext = __RESET;
+        }
+        break;
 
     case REQUEST_MOTORTEST:
         stateChange = true;

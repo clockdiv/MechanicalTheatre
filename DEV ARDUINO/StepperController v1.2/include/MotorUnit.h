@@ -5,8 +5,8 @@
 #include <map>
 #include "Bounce2.h"
 #include "AccelStepper.h"
+#include "Configurations.h"
 
-#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 class MotorUnit {
   private:
@@ -21,12 +21,9 @@ class MotorUnit {
       __UNDEFINED
     };
 
-
-
     AccelStepper stepper;
     MotorUnit* motorResetDependency;  // can be a motor that *this* motor waits for until it's resetting
     Bounce endswitch;
-    // static String stateStrings[states::COUNT];
     static std::map<states, String> stateStringsMap;
 
     uint8_t pinDir;
@@ -35,6 +32,7 @@ class MotorUnit {
     uint16_t resetSpeed;
     static uint16_t maxStepperSpeed;
     uint16_t keyframeValues[MAX_FRAMES];    // all keyframes. assigned by read_keyframes_from_file()
+
 
     void smRun();
     void idle();

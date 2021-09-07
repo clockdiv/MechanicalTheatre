@@ -14,28 +14,21 @@
      ...and stores it in exact the same way as binary data into a file on the SD-Card or the SPI Flash File System.
 */
 
-#ifndef ARDUINO_TEENSY41
-#error "teensy 4.1 needed for this project."
-#endif
-
-#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
-
+//#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
 
 #include <Arduino.h>
-// local includes
-#include "Configurations12.h"
+#include "Configurations.h"
 #include "StateMachine.h"
 #include "i2cHandler.h"
-
-// cross-project includes
 #include "MotorUnit.h"
-#include "KeyframeProcess.h"
+#include "FileProcess.h"
 
 uint16_t errorCode = 0;
 
 // motor units
 MotorUnit steppers[UNIT_COUNT];
 
+FileProcess fileProcess;
 // communication
 i2cHandler i2chandler;
 
@@ -53,12 +46,23 @@ bool statusLEDstate = false;
 states state;
 states stateOld;
 
+std::map<states, String> stateStringsMap =
+    {{__INCOMING_SERIAL, "INCOMING SERIAL"},
+     {__RESET, "RESET"},
+     {__WAIT_FOR_MOTOR_INIT, "WAIT FOR MOTOR INIT"},
+     {__IDLE, "IDLE"},
+     {__PLAY, "PLAY"},
+     {__HARDWARE_TEST, "HARDWARE TEST"},
+     {__ERROR, "ERROR"},
+     {__UNDEFINED, "UNDEFINED"}};
+
 elapsedMillis sinceDebugMessage, enterNextStateAfterMillis;
 
 // function declarations
 void smRun();
 void stateEnter();
 void stateExit();
+String stateToString(states _state);
 void __incoming_serial();
 void __reset();
 void __wait_for_motor_init();
@@ -114,7 +118,7 @@ void setup()
   }
 
   // read all files and store curves in MotorUnits (stepper[])
-  if (!FileProcess::read_all_files(filenames, steppers, UNIT_COUNT))
+  if (!fileProcess.read_all_files(filenames, steppers, UNIT_COUNT))
   {
     Serial.println(F("error while reading files during startup"));
     errorCode = ERR_READING_FILES;
@@ -141,7 +145,7 @@ void loop()
   if (state != stateOld)
   {
     Serial.print(F("state:\t\t"));
-    Serial.println(stateStrings[state]);
+    Serial.println(stateToString(state));
 
     stateExit();
     stateEnter();
@@ -270,9 +274,9 @@ void __incoming_serial()
     if (inChar == 'u')
     {
       statusLEDOn();
-      FileProcess::deleteFiles(filenames, UNIT_COUNT);
+      fileProcess.deleteFiles(filenames, UNIT_COUNT);
 
-      int8_t receiveError = FileProcess::receive_keyframes(filenames, UNIT_COUNT);
+      int8_t receiveError = fileProcess.receive_keyframes(filenames, UNIT_COUNT);
       if (receiveError == -1)
       {
         // did not receive as many bytes as expected
@@ -292,14 +296,14 @@ void __incoming_serial()
       }
 
       // read all files after they are received and reset the animation
-      FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+      fileProcess.read_all_files(filenames, steppers, UNIT_COUNT);
       delay(100);
       keyframeIndex = 0;
       state = __RESET;
     }
     else if (inChar == 'r')
     {
-      FileProcess::read_all_files(filenames, steppers, UNIT_COUNT);
+      fileProcess.read_all_files(filenames, steppers, UNIT_COUNT);
       state = __RESET;
     }
     else if (inChar == 'p')
@@ -383,8 +387,12 @@ void __play()
   if (millisCurrent - frameDuration >= millisOld)
   {
     keyframeIndex++;
-    Serial.print(F("keyframeindex: "));
-    Serial.println(keyframeIndex);
+
+    if (keyframeIndex % 25 == 0)
+    {
+      Serial.print(keyframeIndex);
+      Serial.print("\t");
+    }
 
     for (int i = 0; i < UNIT_COUNT; i++)
     {
@@ -403,8 +411,6 @@ void __play()
     }
 
     millisOld = millisCurrent;
-
-    // delay(5);
   }
 
   for (int i = 0; i < UNIT_COUNT; i++)
@@ -480,5 +486,17 @@ void statusLEDUpdate()
       statusLEDstate ? statusLEDOff() : statusLEDOn();
       millisOldStatusLED = millisCurrent;
     }
+  }
+}
+
+String stateToString(states _state)
+{
+  if (stateStringsMap.find(_state) != stateStringsMap.end())
+  {
+    return stateStringsMap[_state];
+  }
+  else
+  {
+    return "state does not have a name";
   }
 }

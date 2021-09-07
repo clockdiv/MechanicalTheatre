@@ -1,7 +1,9 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
+#include <map>
 
-enum states {
+enum states
+{
   __INCOMING_SERIAL,
   __RESET,
   __WAIT_FOR_MOTOR_INIT,
@@ -12,16 +14,5 @@ enum states {
   __UNDEFINED
 };
 extern states state;
-
-static String stateStrings[] = {
-  "INCOMING SERIAL",
-  "RESET",
-  "WAIT FOR MOTOR INIT",
-  "IDLE",
-  "PLAY",
-  "HARDWARE TEST",
-  "ERROR",
-  "UNDEFINED"
-};
 
 #endif

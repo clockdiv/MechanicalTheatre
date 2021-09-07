@@ -9,6 +9,7 @@
 #define REQUEST_STATE 0x01
 #define REQUEST_SHOWSTART 0x02
 #define REQUEST_MOTORTEST 0x03
+#define REQUEST_SHOWSTOP 0x04
 #define REQUEST_TEST_MSG 0x10
 
 class i2cHandler
@@ -20,6 +21,7 @@ public:
     static void initI2C();
     int8_t requestState();
     bool requestStart();
+    bool requestStop();
     bool requestMotortest();
     bool requestTest();
 };

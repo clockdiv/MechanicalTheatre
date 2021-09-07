@@ -2,28 +2,17 @@
 
 uint8_t MotorUnit::fps = 25;
 uint16_t MotorUnit::maxStepperSpeed = 6000;
+std::map<MotorUnit::states, String> MotorUnit::stateStringsMap =
+    {{__IDLE, "IDLE"},
+     {__GOING_TO_ENDSWITCH, "GOING TO END SWITCH"},
+     {__ENDSWITCH_PRESSED, "ENDSWITCH PRESSED"},
+     {__GOING_TO_INIT, "GOING TO INIT"},
+     {__DRIVING_SHOW, "DRIVING SHOW"},
+     {__TESTDRIVE, "TESTDRIVE"},
+     {__ENDSWITCH_ERROR, "ENDSWITCH ERROR"},
+     {__UNDEFINED, "UNDEFINED"}};
 
-/* ------------------------------------ */
-// String MotorUnit::stateStrings[] = {
-//     "IDLE",
-//     "GOING TO END SWITCH",
-//     "ENDSWITCH PRESSED",
-//     "GOING TO INIT",
-//     "DRIVING SHOW",
-//     "TESTDRIVE",
-//     "ENDSWITCH ERROR",
-//     "UNDEFINED" };
 
-std::map<MotorUnit::states, String> MotorUnit::stateStringsMap = {{__IDLE, "IDLE"},
-                                                                  {__GOING_TO_ENDSWITCH, "GOING TO END SWITCH"},
-                                                                  {__ENDSWITCH_PRESSED, "ENDSWITCH PRESSED"},
-                                                                  {__GOING_TO_INIT, "GOING TO INIT"},
-                                                                  {__DRIVING_SHOW, "DRIVING SHOW"},
-                                                                  {__TESTDRIVE, "TESTDRIVE"},
-                                                                  {__ENDSWITCH_ERROR, "ENDSWITCH ERROR"},
-                                                                  {__UNDEFINED, "UNDEFINED"}
-
-};
 
 /* ------------------------------------ */
 MotorUnit::MotorUnit()

@@ -19,7 +19,6 @@
 #endif
 
 #include <Arduino.h>
-//#include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include "UniversalTelegramBot.h"
@@ -31,9 +30,6 @@
 #include "Configurations.h"
 #include "StateMachine.h"
 #include "i2cHandler.h"
-
-// cross-project includes
-//#include "KeyframeProcess.h"
 #include "pw.h"
 
 const unsigned long messageScanInterval = 1000; // mean time between scan messages
@@ -51,7 +47,6 @@ i2cHandler i2chandler;
 Bounce coinSlotSensor;
 Bounce btnA, btnB;
 Bounce dipswitch1, dipswitch2, dipswitch3, dipswitch4;
-// Bounce teensyIsReady;
 
 ESP32_tone toneBuzzer(0);
 
@@ -84,6 +79,7 @@ void __idle();
 void __hardware_test();
 
 void serialEvent();
+int8_t requestTeensyState();
 
 void powerSuppliesOn();
 void powerSuppliesOff();
@@ -116,7 +112,6 @@ void setup()
   pinMode(PIN_RELAIS_COINSLOT, OUTPUT);
   pinMode(PIN_RELAIS_POWERSUPPLIES, OUTPUT);
   pinMode(PIN_MEDIACONTROLLER_TRIGGER, OUTPUT);
-  // pinMode(PIN_PLAY_REQUEST, OUTPUT);
 
   // Inputs
   coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT);
@@ -126,7 +121,6 @@ void setup()
   dipswitch2.attach(PIN_DIPSWITCH_2, INPUT_PULLUP);
   dipswitch3.attach(PIN_DIPSWITCH_3, INPUT_PULLUP);
   dipswitch4.attach(PIN_DIPSWITCH_4, INPUT_PULLUP);
-  // teensyIsReady.attach(PIN_IS_READY, INPUT);
 
   btnA.interval(DEBOUNCE_TIME);
   btnB.interval(DEBOUNCE_TIME);
@@ -135,7 +129,6 @@ void setup()
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
   coinSlotSensor.interval(DEBOUNCE_TIME);
-  // teensyIsReady.interval(5);
 
   powerSuppliesOff();
   coinslotDisable();
@@ -153,14 +146,6 @@ void setup()
   buzzerTone(BUZZER_POWER_ON);
 
   // initWiFiAndTelegram();
-
-  // Initialize SD-Card
-  // if (!FileProcess::initFilesystem())
-  // {
-  //   Serial.println(F("Initialization of FileSystem failed!"));
-  //   while (true)
-  //     ;
-  // }
 
   // Initialize i2c communication
   i2chandler.initI2C();
@@ -180,12 +165,6 @@ void loop()
   dipswitch3.update();
   dipswitch4.update();
   coinSlotSensor.update();
-  // teensyIsReady.update();
-
-  if (btnB.fallingEdge())
-  {
-    MediaControllerStartStopTrigger();
-  }
 
   millisCurrent = millis();
 
@@ -226,6 +205,7 @@ void stateEnter()
     i2cTestCounter = 0;
     powerSuppliesOff();
     coinslotEnable();
+    buzzerTone(BUZZER_IDLE);
     millisIdle = millis();
     break;
 
@@ -244,7 +224,7 @@ void stateEnter()
       if (i2chandler.requestStart())
         break;
 
-      delay(3000);
+      delay(1000);
     };
     Serial.println("starting to play");
 
@@ -282,6 +262,8 @@ void stateExit()
     break;
 
   case __PLAY:
+    MediaControllerStartStopTrigger();
+    buzzerTone(BUZZER_STOP_SHOW);
     break;
 
   case __HARDWARE_TEST:
@@ -351,35 +333,58 @@ void __incoming_serial()
 }
 
 /* ------------------------------------ */
+int8_t requestTeensyState()
+{
+  int8_t teensyState = i2chandler.requestState();
+  switch (teensyState)
+  {
+  case 1:
+    Serial.println(F("Teensy is resetting all motors"));
+    break;
+
+  case 2:
+    Serial.println(F("Teensy is waiting for it's motors to init"));
+    break;
+
+  case 3:
+    Serial.println(F("Teensy is idle"));
+    break;
+
+  case 4:
+    Serial.println(F("Teensy is playing the show"));
+    break;
+
+  case 5:
+    Serial.println(F("Teensy is testing the hardware"));
+    break;
+
+  case 6:
+    Serial.println(F("Teensy is in Error State :("));
+    break;
+
+  default:
+    Serial.print(F("Teensy is in another state: "));
+    Serial.println(teensyState);
+    break;
+  }
+
+  return teensyState;
+}
+
+/* ------------------------------------ */
 void __wait_for_teensy()
 {
   if (millisCurrent - millisOld >= teensyStateRequestInterval)
   {
     millisOld = millisCurrent;
-    int8_t teensyState = i2chandler.requestState();
-
-    switch (teensyState)
+    int8_t teensyState = requestTeensyState();
+    if (teensyState == 3) // Teensy is idle
     {
-    case 1:
-      Serial.println("Teensy is resetting all motors");
-      break;
-
-    case 2:
-      Serial.println("Teensy is waiting for it's motors to init");
-      break;
-
-    case 3:
       state = __IDLE;
-      break;
-
-    case 6:
-      Serial.println("Teensy is in Error State :(");
-      break;
-
-    default:
-      Serial.print("Teensy is in another state?!: ");
-      Serial.println(teensyState);
-      break;
+    }
+    else if (teensyState == 4)
+    {
+      i2chandler.requestStop();
     }
   }
 }
@@ -390,41 +395,16 @@ void __play()
   if (millisCurrent - millisOld >= teensyStateRequestInterval)
   {
     millisOld = millisCurrent;
-    int8_t teensyState = i2chandler.requestState();
-
-    switch (teensyState)
+    int8_t teensyState = requestTeensyState();
+    if (teensyState == 1 || teensyState == 2 || teensyState == 3) // Teensy is idle
     {
-    case -1:
-      Serial.println(F("Teensy not responding"));
-      break;
-
-    case 0:
-      Serial.println(F("Serial Data is being uploaded to Teensy"));
-      break;
-
-    case 1:
-    case 2:
-    case 3:
       state = __WAIT_FOR_TEENSY;
-      break;
-
-    case 4:
-      // Serial.println("Teensy is playing the show");
-      break;
-
-    case 5:
-      // Serial.println("Teensy is in Hardware Test Mode");
-      break;
-
-    case 6:
-      Serial.println(F("Teensy is in Error State :("));
-      break;
-
-    default:
-      Serial.print(F("Teensy is in another state?!: "));
-      Serial.println(teensyState);
-      break;
     }
+  }
+
+  if (btnB.fallingEdge())
+  {
+    i2chandler.requestStop();
   }
 }
 
@@ -572,13 +552,8 @@ void MediaControllerStartStopTrigger()
 {
   Serial.println("media controller start");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
-  // digitalWrite(PIN_PLAY_REQUEST, HIGH);
   delay(20);
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
-  // digitalWrite(PIN_PLAY_REQUEST, LOW);
-  //delay(100);
-
-  // teensyIsReady.update();
 }
 
 /* ------------------------------------ */
@@ -752,6 +727,38 @@ void buzzerTone(uint8_t signalID)
     delay(80);
     toneBuzzer.tone(PIN_BUZZER, NOTE_F6);
     delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    break;
+
+  case BUZZER_STOP_SHOW:
+    toneBuzzer.tone(PIN_BUZZER, NOTE_F6);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(80);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_C5);
+    delay(80);
+    toneBuzzer.noTone(PIN_BUZZER);
+    break;
+
+  case BUZZER_IDLE:
+    toneBuzzer.tone(PIN_BUZZER, NOTE_E6);
+    delay(60);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(60);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_D6);
+    delay(60);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(60);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_C6);
+    delay(60);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(60);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_F6);
+    delay(60);
+    toneBuzzer.noTone(PIN_BUZZER);
+    delay(60);
+    toneBuzzer.tone(PIN_BUZZER, NOTE_E6);
+    delay(60);
     toneBuzzer.noTone(PIN_BUZZER);
     break;
   }
