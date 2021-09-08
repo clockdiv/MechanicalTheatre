@@ -12,8 +12,6 @@ std::map<MotorUnit::states, String> MotorUnit::stateStringsMap =
      {__ENDSWITCH_ERROR, "ENDSWITCH ERROR"},
      {__UNDEFINED, "UNDEFINED"}};
 
-
-
 /* ------------------------------------ */
 MotorUnit::MotorUnit()
 {

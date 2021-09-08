@@ -24,6 +24,5 @@
 #define STEPPER_13_ENDSWITCH_PIN 25
 #define STEPPER_13_DIRECTION_PIN 33
 #define STEPPER_13_PULSE_PIN     32
-#define STEPPER_13_IS_INVERTED   0       // unknown yet 
 
 #endif

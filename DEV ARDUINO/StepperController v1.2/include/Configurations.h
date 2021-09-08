@@ -120,17 +120,17 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
 //                                                       0 };// Magd
 
 const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {1,  // Ufo_X-Axis
-                                                      0,  // Ufo_Y-Axis
-                                                      0,  // Schwaene_schwimmen
-                                                      0,  // Schwaene_tauchen
-                                                      0,  // Pferde_1
-                                                      0,  // Pferde_2
-                                                      0,  // Reiter_1
-                                                      0,  // Reiter_2
-                                                      0,  // Luftpumpe
-                                                      0,  // Halbkugel
-                                                      0,  // Vorhang
-                                                      0}; // Magd
+                                                      1,  // Ufo_Y-Axis
+                                                      1,  // Schwaene_schwimmen
+                                                      1,  // Schwaene_tauchen
+                                                      1,  // Pferde_1
+                                                      1,  // Pferde_2
+                                                      1,  // Reiter_1
+                                                      1,  // Reiter_2
+                                                      1,  // Luftpumpe
+                                                      1,  // Halbkugel
+                                                      1,  // Vorhang
+                                                      1}; // Magd
 
 const uint8_t steppersPinConfig[UNIT_COUNT][4] = {                                                  // Stepper-Motor Pins
     {STEPPER_1_ENDSWITCH_PIN, STEPPER_1_DIRECTION_PIN, STEPPER_1_PULSE_PIN, STEPPER_1_IS_INVERTED}, // End-Switch; Direction; Pulse; DirectionInvert

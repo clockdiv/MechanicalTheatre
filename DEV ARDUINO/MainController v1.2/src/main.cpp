@@ -21,6 +21,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <AccelStepper.h>
 #include "UniversalTelegramBot.h"
 #include "Bounce2.h"
 #include "ESP32_tone.h"
@@ -47,6 +48,10 @@ i2cHandler i2chandler;
 Bounce coinSlotSensor;
 Bounce btnA, btnB;
 Bounce dipswitch1, dipswitch2, dipswitch3, dipswitch4;
+Bounce endswitchStopSign;
+
+AccelStepper stepperStopSign;
+uint16_t stepperStopsignUpPosition = 0;
 
 ESP32_tone toneBuzzer(0);
 
@@ -91,6 +96,9 @@ void statusLEDOn();
 void statusLEDOff();
 void statusLEDUpdate();
 
+void stopsignUp();
+void stopsignDown();
+
 void MediaControllerStartStopTrigger();
 
 void initWiFiAndTelegram();
@@ -114,13 +122,14 @@ void setup()
   pinMode(PIN_MEDIACONTROLLER_TRIGGER, OUTPUT);
 
   // Inputs
-  coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT);
+  coinSlotSensor.attach(PIN_COINSLOT_SENSOR, INPUT_PULLUP);
   btnA.attach(PIN_BTN_A, INPUT_PULLUP);
   btnB.attach(PIN_BTN_B, INPUT_PULLUP);
   dipswitch1.attach(PIN_DIPSWITCH_1, INPUT_PULLUP);
   dipswitch2.attach(PIN_DIPSWITCH_2, INPUT_PULLUP);
   dipswitch3.attach(PIN_DIPSWITCH_3, INPUT_PULLUP);
   dipswitch4.attach(PIN_DIPSWITCH_4, INPUT_PULLUP);
+  endswitchStopSign.attach(STEPPER_13_ENDSWITCH_PIN, INPUT_PULLDOWN);
 
   btnA.interval(DEBOUNCE_TIME);
   btnB.interval(DEBOUNCE_TIME);
@@ -129,6 +138,13 @@ void setup()
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
   coinSlotSensor.interval(DEBOUNCE_TIME);
+  endswitchStopSign.interval(DEBOUNCE_TIME);
+
+  stepperStopSign.setInterface(AccelStepper::DRIVER);
+  stepperStopSign.setPins(STEPPER_13_PULSE_PIN, STEPPER_13_DIRECTION_PIN);
+  stepperStopSign.setMinPulseWidth(50);
+  stepperStopSign.setMaxSpeed(3000);
+  stepperStopSign.setCurrentPosition(0);
 
   powerSuppliesOff();
   coinslotDisable();
@@ -165,6 +181,7 @@ void loop()
   dipswitch3.update();
   dipswitch4.update();
   coinSlotSensor.update();
+  endswitchStopSign.update();
 
   millisCurrent = millis();
 
@@ -201,6 +218,7 @@ void stateEnter()
     break;
 
   case __IDLE:
+    stopsignUp();
     i2cTestCounter2 = 0;
     i2cTestCounter = 0;
     powerSuppliesOff();
@@ -212,12 +230,12 @@ void stateEnter()
   case __PLAY:
     statusLEDBlinkFrequency = 1000;
     showCounter++;
+    powerSuppliesOn();
+    stopsignDown();
     // telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
     // sendTelegramMessage(telegramMessage_tmp);
 
     buzzerTone(BUZZER_START_SHOW);
-
-    powerSuppliesOn();
 
     while (true) // wait until Teensy is ready
     {
@@ -761,5 +779,34 @@ void buzzerTone(uint8_t signalID)
     delay(60);
     toneBuzzer.noTone(PIN_BUZZER);
     break;
+  }
+}
+
+/* ------------------------------------ */
+void stopsignUp()
+{
+  Serial.println("Hoch das Schild!");
+  stepperStopSign.setSpeed(-100);
+  endswitchStopSign.update();
+  Serial.print(endswitchStopSign.read());
+  while (!endswitchStopSign.read())
+  {
+    Serial.print(endswitchStopSign.read());
+    stepperStopSign.runSpeed();
+    endswitchStopSign.update();
+  }
+
+  stepperStopsignUpPosition = stepperStopSign.currentPosition();
+}
+
+/* ------------------------------------ */
+void stopsignDown()
+{
+  Serial.println("Runter das Schild!");
+  stepperStopSign.setAcceleration(1000);
+  stepperStopSign.moveTo(0);
+  while (stepperStopSign.distanceToGo() > 0)
+  {
+    stepperStopSign.run();
   }
 }

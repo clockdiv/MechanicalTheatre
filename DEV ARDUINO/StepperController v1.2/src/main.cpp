@@ -14,8 +14,6 @@
      ...and stores it in exact the same way as binary data into a file on the SD-Card or the SPI Flash File System.
 */
 
-//#define MAX_FRAMES 4000     // maximum number of frames, used to initialize the keyframeValues-array
-
 #include <Arduino.h>
 #include "Configurations.h"
 #include "StateMachine.h"
@@ -40,7 +38,7 @@ uint16_t keyframeIndex = 0;                          // current position of the 
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 0;
 bool statusLEDstate = false;
-
+// bool motorDebugSet = false;
 // Bounce playRequest;
 
 states state;
@@ -170,6 +168,7 @@ void stateEnter()
   switch (state)
   {
   case __RESET:
+    // motorDebugSet = false;
     statusLEDBlinkFrequency = 100;
     break;
 
@@ -298,7 +297,6 @@ void __incoming_serial()
       // read all files after they are received and reset the animation
       fileProcess.read_all_files(filenames, steppers, UNIT_COUNT);
       delay(100);
-      keyframeIndex = 0;
       state = __RESET;
     }
     else if (inChar == 'r')
@@ -339,11 +337,20 @@ void __reset()
 /* ------------------------------------ */
 void __wait_for_motor_init()
 {
-  if (enterNextStateAfterMillis >= 10000)
-  {
-    Serial.println("(WAIT_FOR_MOTOR_INIT) entering next state (->IDLE) after debug-timeout");
-    state = __IDLE;
-  }
+
+  /* --------------------------------- */
+  /* debug block begin */
+  // if (enterNextStateAfterMillis >= 5000 && motorDebugSet == false)
+  // {
+  //   Serial.println("(WAIT_FOR_MOTOR_INIT) entering next state (->IDLE) after debug-timeout");
+  //   for (int i = 0; i < UNIT_COUNT; i++)
+  //   {
+  //       steppers[i].setEndswitchPressed();
+  //   }
+  //   motorDebugSet = true;
+  // }
+  /* debug block end */
+  /* --------------------------------- */
 
   for (int i = 0; i < UNIT_COUNT; i++)
   {

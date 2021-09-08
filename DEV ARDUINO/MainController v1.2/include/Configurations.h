@@ -4,11 +4,7 @@
 #include "Pins.h"
 
 #define TEENSY_I2C_ADDR 0x10
-
-#define STEPPER_13_INIT_POS      500
-#define STEPPER_13_RESET_SPEED   500
-
-#define DEBOUNCE_TIME             25
+#define DEBOUNCE_TIME   25
 
 // Signals for the Buzzer:
 // 100-199: info messages
