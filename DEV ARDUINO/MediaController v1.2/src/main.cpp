@@ -43,7 +43,10 @@ const uint8_t fps = 25;
 unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
 unsigned long frameDuration = 1000 / fps;   // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
-
+float lightSoundMultiplicator = 1.0f;       // to slowly dimm down the lights and audio
+const float dimmSpeed = 1 / 10000000.0;  // that's a small number.
+float volume = 0.7;
+bool showEnding = false;
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 1000;
 bool statusLEDstate = false;
@@ -77,15 +80,11 @@ void allDMXChannelsOff();
 /*-------------------------------*/
 void setup()
 {
-  //while(!Serial);
-  delay(2000);
   pinMode(PIN_EXT_LED, OUTPUT);
   startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT_PULLDOWN);
   startStopTrigger.interval(5);
 
   dmxTx.begin();
-  // dmxTx.set(1, 128);
-  // dmxTx.set(10, data, 3);
 
   float volume = 0.7;
 
@@ -112,6 +111,8 @@ void setup()
     errorCode = ERR_SD_FAILED;
     state = __ERROR;
   }
+
+  Serial.println("starting");
 }
 
 /*-------------------------------*/
@@ -176,6 +177,8 @@ void stateEnter()
     break;
 
   case __PLAY:
+    lightSoundMultiplicator = 1.0f;
+    showEnding = false;
     statusLEDBlinkFrequency = 1000;
     keyframeIndex = 0;
     dmxPlayer.loadFile(dmxFileName);
@@ -223,10 +226,10 @@ void stateExit()
 /*-------------------------------*/
 void playAudioFile(const char *filename, AudioPlaySdWav &player)
 {
-  if (player.isPlaying()) {
-   // Serial.println("player is already playing");
+  if (player.isPlaying())
+  {
+    // Serial.println("player is already playing");
     return;
-
   }
 
   // Serial.print("Playing file: ");
@@ -272,15 +275,18 @@ void __idle()
 /*-------------------------------*/
 void __play()
 {
-  
+
   if (millisCurrent - frameDuration >= millisOld)
   {
+    sgtl5000_1.volume(lightSoundMultiplicator);
+    sgtl5000_2.volume(lightSoundMultiplicator);
+
     if (!dmxPlayer.eof)
     {
       //int16_t value = 0;
       Serial.print(keyframeIndex);
       // Serial.print(F(" | "));
-    
+
       dmxPlayer.playDMXFile();
 
       for (int i = 0; i < dmxPlayer.channelCount; i++)
@@ -290,9 +296,9 @@ void __play()
         //   Serial.println("return < 0");
         //   break;
         // }
-        dmxTx.set(dmxPlayer.dmxChannels[i], uint8_t(dmxPlayer.dmxValues[i] ));
-        // Serial.print(F("ch:")); 
-        
+        dmxTx.set(dmxPlayer.dmxChannels[i], uint8_t(dmxPlayer.dmxValues[i]));
+        // Serial.print(F("ch:"));
+
         // Serial.print(dmxPlayer.dmxChannels[i]);
         // Serial.print(F(" "));
         // Serial.print( uint8_t(dmxPlayer.dmxValues[i]), DEC);
@@ -308,10 +314,22 @@ void __play()
     millisOld = millisCurrent;
   }
 
-  // if (startStopTrigger.risingEdge())
-  // {
-  //   state = __IDLE;
-  // }
+  if (startStopTrigger.risingEdge())
+  {
+    Serial.println("show Ending");
+    showEnding = true;
+  }
+
+  if (showEnding)
+  {
+    lightSoundMultiplicator -= dimmSpeed;
+  }
+
+  if (lightSoundMultiplicator <= 0)
+  {
+    Serial.println("going to idle");
+    state = __IDLE;
+  }
 }
 
 /* ------------------------------------ */

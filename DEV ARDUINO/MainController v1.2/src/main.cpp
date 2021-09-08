@@ -785,13 +785,11 @@ void buzzerTone(uint8_t signalID)
 /* ------------------------------------ */
 void stopsignUp()
 {
-  Serial.println("Hoch das Schild!");
   stepperStopSign.setSpeed(-100);
   endswitchStopSign.update();
   Serial.print(endswitchStopSign.read());
   while (!endswitchStopSign.read())
   {
-    Serial.print(endswitchStopSign.read());
     stepperStopSign.runSpeed();
     endswitchStopSign.update();
   }
@@ -802,7 +800,6 @@ void stopsignUp()
 /* ------------------------------------ */
 void stopsignDown()
 {
-  Serial.println("Runter das Schild!");
   stepperStopSign.setAcceleration(1000);
   stepperStopSign.moveTo(0);
   while (stepperStopSign.distanceToGo() > 0)
