@@ -556,6 +556,8 @@ void powerSuppliesOn()
 /* ------------------------------------ */
 void powerSuppliesOff()
 {
+  Serial.println("power off");
+  Serial.println(dipswitch2.read());
   if (dipswitch2.read() == LOW) // on-position
   {
     return;
@@ -785,6 +787,7 @@ void buzzerTone(uint8_t signalID)
 /* ------------------------------------ */
 void stopsignUp()
 {
+  return;
   stepperStopSign.setSpeed(-100);
   endswitchStopSign.update();
   Serial.print(endswitchStopSign.read());
@@ -800,6 +803,7 @@ void stopsignUp()
 /* ------------------------------------ */
 void stopsignDown()
 {
+  return;
   stepperStopSign.setAcceleration(1000);
   stepperStopSign.moveTo(0);
   while (stepperStopSign.distanceToGo() > 0)
