@@ -106,6 +106,20 @@ const int8_t steppersResetDependencies[UNIT_COUNT] = {-1,  // Ufo_X-Axis
                                                       -1,  // Vorhang
                                                       -1}; // Magd
 
+const int8_t steppersEmergencyStopDependencies[UNIT_COUNT] = {1,   // Ufo_X-Axis checks if Ufo_Y-Axis is okay
+                                                              0,   // Ufo_Y-Axis checks if Ufo_X-Axis is okay
+                                                              3,   // Schwaene_schwimmen checks if Schwaene_tauchen is okay
+                                                              2,   // Schwaene_tauchen
+                                                              5,   // Pferde_1
+                                                              4,   // Pferde_2
+                                                              -1,  // Reiter_1
+                                                              -1,  // Reiter_2
+                                                              -1,  // Luftpumpe
+                                                              -1,  // Halbkugel
+                                                              -1,  // Vorhang
+                                                              -1}; // Magd
+
+
 // const int8_t steppersInvertedEndswitch[UNIT_COUNT] = {1,  // Ufo_X-Axis
 //                                                       0,  // Ufo_Y-Axis
 //                                                       1,  // Schwaene_schwimmen

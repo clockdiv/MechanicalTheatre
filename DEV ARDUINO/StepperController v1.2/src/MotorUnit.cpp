@@ -33,6 +33,7 @@ void MotorUnit::initDriver(String _name, uint8_t _pinEnd, uint8_t _pinDir, uint8
   initPosition = _initPosition;
   resetSpeed = _resetSpeed;
   motorResetDependency = nullptr;
+  motorEmergencyStopDependency = nullptr;
   invertedEndswitch = _invertedEndswitch;
 
   stepper.setInterface(AccelStepper::DRIVER);
@@ -187,7 +188,10 @@ void MotorUnit::drivingShow()
     return;
   }
 
-  stepper.runSpeedToPosition();
+  if (motorEmergencyStopDependency == nullptr || motorEmergencyStopDependency->motorState != __ENDSWITCH_ERROR)
+  {
+    stepper.runSpeedToPosition();
+  }
 }
 
 /* ------------------------------------ */
@@ -220,6 +224,12 @@ String MotorUnit::stateToString(states _state)
 void MotorUnit::setResetDependency(MotorUnit *_motorResetDependency)
 {
   motorResetDependency = _motorResetDependency;
+}
+
+/* ------------------------------------ */
+void MotorUnit::setEmergencyStopDependency(MotorUnit *_motorEmergencyStopDependency)
+{
+  motorEmergencyStopDependency = _motorEmergencyStopDependency;
 }
 
 /* ------------------------------------ */

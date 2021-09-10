@@ -94,12 +94,17 @@ void setup()
                            steppersInvertedEndswitch[i]);
   }
 
-  // Set Motor Reset-Dependencies
+  // Set Motor Reset- and Emergency-Stop-Dependencies
   for (int i = 0; i < UNIT_COUNT; i++)
   {
     if (steppersResetDependencies[i] >= 0)
     {
       steppers[i].setResetDependency(&steppers[steppersResetDependencies[i]]);
+    }
+    
+    if(steppersEmergencyStopDependencies[i] >= 0)
+    {
+      steppers[i].setEmergencyStopDependency(&steppers[steppersEmergencyStopDependencies[i]]);
     }
   }
 
