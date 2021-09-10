@@ -33,17 +33,17 @@
 #define STEPPER_5_IS_INVERTED 1
 
 // Pferde 2
-#define STEPPER_6_INIT_POS 1500
+#define STEPPER_6_INIT_POS 500
 #define STEPPER_6_RESET_SPEED 2500
 #define STEPPER_6_IS_INVERTED 0
 
 // Reiter 1
-#define STEPPER_7_INIT_POS 70
+#define STEPPER_7_INIT_POS 150
 #define STEPPER_7_RESET_SPEED 500
 #define STEPPER_7_IS_INVERTED 0 // unknown yet
 
 // Reiter 2
-#define STEPPER_8_INIT_POS 70
+#define STEPPER_8_INIT_POS 150
 #define STEPPER_8_RESET_SPEED 500
 #define STEPPER_8_IS_INVERTED 0 // unknown yet
 
