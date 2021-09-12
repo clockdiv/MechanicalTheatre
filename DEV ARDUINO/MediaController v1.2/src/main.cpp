@@ -35,28 +35,30 @@ AudioControlSGTL5000 sgtl5000_2; //xy=353,432
 
 // dmx configs
 qindesign::teensydmx::Sender dmxTx{Serial6};
-uint8_t data[3]{0x44, 0x88, 0xcc};
 DMXKeyframeProcess dmxPlayer;
 String dmxFileName = "DMX.DAT";
+
 // timing
 const uint8_t fps = 25;
 unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
 unsigned long frameDuration = 1000 / fps;   // duration of a frame in milliseconds
 uint16_t keyframeIndex = 0;                 // current position of the timeline, used for playback
-float lightSoundMultiplicator = 1.0f;       // to slowly dimm down the lights and audio
-const float dimmSpeed = 1 / 10000000.0;  // that's a small number.
-float volume = 0.7;
-bool showEnding = false;
+
+// status led
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 1000;
 bool statusLEDstate = false;
+
+// fade out
+float fadeoutMultiplier = 1.0f;    // to slowly dimm down the lights and audio
+const float dimmSpeed = 1 / 100.0; // that's a small number.
+float volume = 0.7;
+bool showEnding = false;
 
 Bounce startStopTrigger;
 
 // state logic
 states state, stateOld;
-bool startShow = false, stopShow = false;
-
 uint16_t errorCode = 0;
 
 // function declarations
@@ -86,23 +88,20 @@ void setup()
 
   dmxTx.begin();
 
-  float volume = 0.7;
+  stateOld = __UNDEFINED;
+  state = __IDLE;
 
+  // Setup both Audio Shields
   AudioMemory(10);
 
   sgtl5000_1.setAddress(LOW);
   sgtl5000_1.enable();
-  sgtl5000_1.volume(volume);
 
   sgtl5000_2.setAddress(HIGH);
   sgtl5000_2.enable();
-  sgtl5000_2.volume(volume);
 
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
-
-  stateOld = __UNDEFINED;
-  state = __IDLE;
 
   // Initialize SD-Card
   if (!SD.begin(SDCARD_CS_PIN))
@@ -112,7 +111,22 @@ void setup()
     state = __ERROR;
   }
 
-  Serial.println("starting");
+  dmxPlayer.loadFile(dmxFileName);
+
+  //show first 10 frames of dmx data:
+
+  // for (int i = dmxPlayer.frameCount-125; i < dmxPlayer.frameCount; i++)
+  // {
+  //   Serial.print("frame: ");
+  //   Serial.print(i);
+  //   Serial.print("\t");
+  //   for (int j = 0; j < dmxPlayer.channelCount; j++)
+  //   {
+  //     Serial.print(dmxPlayer.dmxData[i * dmxPlayer.channelCount + j]);
+  //     Serial.print(", ");
+  //   }
+  //   Serial.println();
+  // }
 }
 
 /*-------------------------------*/
@@ -177,14 +191,20 @@ void stateEnter()
     break;
 
   case __PLAY:
-    lightSoundMultiplicator = 1.0f;
-    showEnding = false;
     statusLEDBlinkFrequency = 1000;
     keyframeIndex = 0;
-    dmxPlayer.loadFile(dmxFileName);
+    fadeoutMultiplier = 1.0f;
+    showEnding = false;
+
+    sgtl5000_1.volume(volume);
+    sgtl5000_2.volume(volume);
+
     delay(10);
     playAudioFile("TEST12.WAV", playSdWav1);
     playAudioFile("TEST34.WAV", playSdWav2);
+    break;
+
+  case __ERROR:
     break;
 
   case __UNDEFINED:
@@ -213,6 +233,11 @@ void stateExit()
     allDMXChannelsOff();
     stopAudioFile(playSdWav1);
     stopAudioFile(playSdWav2);
+    Serial.print("Max Audio Memory Usage: ");
+    Serial.println(AudioMemoryUsageMax());
+    break;
+
+  case __ERROR:
     break;
 
   case __UNDEFINED:
@@ -243,9 +268,9 @@ void playAudioFile(const char *filename, AudioPlaySdWav &player)
   delay(5);
   return;
   // Simply wait for the file to finish playing.
-  // while (player.isPlaying())
-  // {
-  // }
+  while (player.isPlaying())
+  {
+  }
 }
 
 /*-------------------------------*/
@@ -275,43 +300,37 @@ void __idle()
 /*-------------------------------*/
 void __play()
 {
-
   if (millisCurrent - frameDuration >= millisOld)
   {
-    sgtl5000_1.volume(lightSoundMultiplicator);
-    sgtl5000_2.volume(lightSoundMultiplicator);
-
-    if (!dmxPlayer.eof)
+    millisOld = millisCurrent;
+    if (keyframeIndex < dmxPlayer.frameCount && fadeoutMultiplier > 0.0f)
     {
-      //int16_t value = 0;
-      Serial.print(keyframeIndex);
-      // Serial.print(F(" | "));
-
-      dmxPlayer.playDMXFile();
-
-      for (int i = 0; i < dmxPlayer.channelCount; i++)
-      {
-        // if (value < 0)
-        // {
-        //   Serial.println("return < 0");
-        //   break;
-        // }
-        dmxTx.set(dmxPlayer.dmxChannels[i], uint8_t(dmxPlayer.dmxValues[i]));
-        // Serial.print(F("ch:"));
-
-        // Serial.print(dmxPlayer.dmxChannels[i]);
-        // Serial.print(F(" "));
-        // Serial.print( uint8_t(dmxPlayer.dmxValues[i]), DEC);
-        // Serial.print(F(" "));
-      }
       keyframeIndex++;
+
+      Serial.print("frame: ");
+      Serial.print(keyframeIndex);
+      Serial.print("\t");
+      for (int channelIndex = 0; channelIndex < dmxPlayer.channelCount; channelIndex++)
+      {
+        uint8_t data = dmxPlayer.dmxData[keyframeIndex * dmxPlayer.channelCount + channelIndex];
+        uint16_t channel = dmxPlayer.dmxChannels[channelIndex];
+        Serial.print(data);
+        Serial.print(", ");
+        dmxTx.set(channel, data);
+      }
       Serial.println();
+
+      if (showEnding)
+      {
+        fadeoutMultiplier -= dimmSpeed;
+        sgtl5000_1.volume(volume * fadeoutMultiplier);
+        sgtl5000_2.volume(volume * fadeoutMultiplier);
+      }
     }
     else
     {
       state = __IDLE;
     }
-    millisOld = millisCurrent;
   }
 
   if (startStopTrigger.risingEdge())
@@ -320,16 +339,6 @@ void __play()
     showEnding = true;
   }
 
-  if (showEnding)
-  {
-    lightSoundMultiplicator -= dimmSpeed;
-  }
-
-  if (lightSoundMultiplicator <= 0)
-  {
-    Serial.println("going to idle");
-    state = __IDLE;
-  }
 }
 
 /* ------------------------------------ */
@@ -353,24 +362,15 @@ void __incoming_serial()
       statusLEDOn();
 
       int8_t receiveError = dmxPlayer.receive_keyframes(dmxFileName);
-
-      if (receiveError == 0)
+      if (receiveError == INF_FILE_SUCCESSFUL_WRITTEN)
       {
-        statusLEDOff();
         state = __IDLE;
-        return;
       }
-      else if (receiveError == -1)
+      else
       {
-        errorCode = ERR_WRITING_FILES; // failed to open file for writing
+        errorCode = receiveError;
+        state = __ERROR;
       }
-      state = __ERROR;
-      return;
-      //     if (receiveError == -1) {
-      //       // did not receive as many bytes as expected
-      //     } else if (receiveError == -2) {
-      //       // error while writing file to sd-card
-      //     }
     }
   }
 }

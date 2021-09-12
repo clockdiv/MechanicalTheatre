@@ -3,10 +3,23 @@
 uint16_t DMXKeyframeProcess::frameCount = 0;   // size of incoming data package
 uint16_t DMXKeyframeProcess::channelCount = 0; // the number of curves/timelines to receive (each stepper one curve)
 uint16_t DMXKeyframeProcess::dmxChannels[] = {0};
-char DMXKeyframeProcess::dmxValues[512] = {0};
+//char DMXKeyframeProcess::dmxValues[512] = {0};
 File DMXKeyframeProcess::dmxFile;
-bool DMXKeyframeProcess::eof = false;
+EXTMEM uint8_t DMXKeyframeProcess::dmxData[MAX_FRAMES * 512] = { 0 };
 
+/* ------------------------------ */
+DMXKeyframeProcess::DMXKeyframeProcess()
+{
+    // Init Data in EXTMEM to zero
+    for(int i = 0; i < MAX_FRAMES * 512; i++)
+    {
+        dmxData[i] = 0;
+    }
+}
+
+/* ------------------------------ */
+// Receives the data from serial in following format. Data is a long list containing
+// the values of all channels in one frame, following the next frame
 int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
 {
     // Open file to write into
@@ -15,16 +28,16 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
 
     if (SD.exists(filename))
     {
-      Serial.print("deleting ");
-      Serial.println(filename);
-      SD.remove(filename);
+        Serial.print("deleting ");
+        Serial.println(filename);
+        SD.remove(filename);
     }
 
     dmxFile = SD.open(filename, FILE_WRITE | O_TRUNC);
     if (!dmxFile)
     {
         Serial.println(F("failed to open file for writing"));
-        return -1;
+        return ERR_OPEN_FILE_FOR_WRITING;
     }
 
     // HEADER BEGIN
@@ -34,33 +47,33 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
     Serial.readBytes(buf, 2);
     frameCount = ((buf[1] << 8) + buf[0]);
     if (!dmxFile.write(buf[0]))
-        return -1;
+        return ERR_WRITING_FILE;
     if (!dmxFile.write(buf[1]))
-        return -1;
-    Serial.print("Package Size: ");
+        return ERR_WRITING_FILE;
+    Serial.print(F("Package Size: "));
     Serial.println(frameCount);
 
     // the next two bytes determine the number of curves/timelines to receive
     Serial.readBytes(buf, 2);
     channelCount = ((buf[1] << 8) + buf[0]);
     if (!dmxFile.write(buf[0]))
-        return -1;
+        return ERR_WRITING_FILE;
     if (!dmxFile.write(buf[1]))
-        return -1;
-    Serial.print("Channel Count: ");
+        return ERR_WRITING_FILE;
+    Serial.print(F("Channel Count: "));
     Serial.println(channelCount);
 
     // next is a list of the channels that are used
-    Serial.print("DMX-Channels used: ");
+    Serial.print(F("DMX-Channels used: "));
     uint16_t receivedChannelNumbers = 0;
     while (receivedChannelNumbers < channelCount)
     {
         Serial.readBytes(buf, 2);
         uint16_t channelNumber = ((buf[1] << 8) + buf[0]);
         if (!dmxFile.write(buf[0]))
-            return -1;
+            return ERR_WRITING_FILE;
         if (!dmxFile.write(buf[1]))
-            return -1;
+            return ERR_WRITING_FILE;
         Serial.print(channelNumber);
         Serial.print(" ");
         //dmxChannels[receivedChannelNumbers] = channelNumber; // so all channelnumber > 0 will be taken
@@ -73,16 +86,16 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
     // DATA BEGIN
     // ----------
     // receive all values for each frame:
-    uint16_t dataIndex = 0;
-    Serial.print("Avaiting packages: ");
+    Serial.print(F("Avaiting packages: "));
     Serial.println(channelCount * frameCount);
+    uint16_t dataIndex = 0;
     while (dataIndex < channelCount * frameCount)
     {
         if (Serial.available())
         {
             byte ch = (byte)Serial.read();
             if (!dmxFile.write(ch))
-                return -1;
+                return ERR_WRITING_FILE;
             Serial.print(ch);
             Serial.print(", ");
             dataIndex++;
@@ -92,10 +105,11 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
     // --------
     dmxFile.close();
 
-    return 0;
+    return INF_FILE_SUCCESSFUL_WRITTEN;
 }
 
-bool DMXKeyframeProcess::loadFile(String _filename)
+/* ------------------------------ */
+int8_t DMXKeyframeProcess::openDMXFile(String _filename)
 {
     // Open file to read from
     char filename[_filename.length() + 1];
@@ -105,14 +119,13 @@ bool DMXKeyframeProcess::loadFile(String _filename)
     if (!dmxFile || dmxFile.isDirectory())
     {
         Serial.println(F("failed to open file for reading."));
-        return -1;
+        return ERR_READING_FILE;
     }
-
-    initHeader();
     return 1;
 }
 
-bool DMXKeyframeProcess::initHeader()
+/* ------------------------------ */
+bool DMXKeyframeProcess::readHeader()
 {
     // HEADER START
     char byteLow = dmxFile.read();
@@ -139,23 +152,52 @@ bool DMXKeyframeProcess::initHeader()
     Serial.println();
     // HEADER END
 
-    eof = false;
     return 1;
 }
 
-int16_t DMXKeyframeProcess::playDMXFile()
+/* ------------------------------ */
+// Reads the dmx-values for all channels from the next frame.
+// note: the file is kept open. the file-pointer automatically goes to the
+// next bunch of values.
+// int8_t DMXKeyframeProcess::readNextFrameChannelvalues()
+// {
+//     if (dmxFile.available())
+//     {
+//         dmxFile.readBytes(dmxValues, channelCount); // read one frame with all dmx-channel-values
+//         return 0;
+//     }
+//     else
+//     {
+//         Serial.println(F("end of file"));
+//         dmxFile.close();
+//         return INF_END_OF_FILE;
+//     }
+// }
+
+/* ------------------------------ */
+int8_t DMXKeyframeProcess::loadFile(String _filename)
 {
-    if (dmxFile.available())
+    openDMXFile(_filename);
+    readHeader();
+
+    uint16_t i = 0;
+    while (dmxFile.available()) // the file pointer is already at the correct position after reading the header
     {
-        dmxFile.readBytes(dmxValues, channelCount);
-        //int16_t value = int16_t(dmxFile.read());
-        return 0;
+        dmxData[i] = dmxFile.read();
+        i++;
     }
-    else
-    {
-        Serial.println(F("end of file"));
-        eof = true;
-        dmxFile.close();
-        return -1;
-    }
+    Serial.print("loaded all data, bytes read: ");
+    Serial.println(i);
+
+    //  load all data into dmxData-Array in Extmem
+
+    dmxFile.close();
+
+    return 0;
+}
+
+/* ------------------------------ */
+int8_t DMXKeyframeProcess::getDMXData(uint16_t channel, uint16_t _keyframe)
+{
+    return 0;
 }
