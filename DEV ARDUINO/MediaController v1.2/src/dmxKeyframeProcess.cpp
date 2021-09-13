@@ -88,7 +88,7 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
     // receive all values for each frame:
     Serial.print(F("Avaiting packages: "));
     Serial.println(channelCount * frameCount);
-    uint16_t dataIndex = 0;
+    uint32_t dataIndex = 0;
     while (dataIndex < channelCount * frameCount)
     {
         if (Serial.available())
@@ -96,8 +96,6 @@ int8_t DMXKeyframeProcess::receive_keyframes(String _filename)
             byte ch = (byte)Serial.read();
             if (!dmxFile.write(ch))
                 return ERR_WRITING_FILE;
-            Serial.print(ch);
-            Serial.print(", ");
             dataIndex++;
         }
     }
@@ -180,7 +178,7 @@ int8_t DMXKeyframeProcess::loadFile(String _filename)
     openDMXFile(_filename);
     readHeader();
 
-    uint16_t i = 0;
+    uint32_t i = 0;
     while (dmxFile.available()) // the file pointer is already at the correct position after reading the header
     {
         dmxData[i] = dmxFile.read();

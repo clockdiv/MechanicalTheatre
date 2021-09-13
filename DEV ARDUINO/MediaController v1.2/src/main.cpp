@@ -37,6 +37,7 @@ AudioControlSGTL5000 sgtl5000_2; //xy=353,432
 qindesign::teensydmx::Sender dmxTx{Serial6};
 DMXKeyframeProcess dmxPlayer;
 String dmxFileName = "DMX.DAT";
+EXTMEM static uint8_t dmxDataBuffer[MAX_FRAMES * 512];
 
 // timing
 const uint8_t fps = 25;
@@ -82,6 +83,8 @@ void allDMXChannelsOff();
 /*-------------------------------*/
 void setup()
 {
+  Serial1.addMemoryForRead(dmxDataBuffer, MAX_FRAMES * 512);
+
   pinMode(PIN_EXT_LED, OUTPUT);
   startStopTrigger.attach(PIN_START_STOP_TRIGGER, INPUT_PULLDOWN);
   startStopTrigger.interval(5);
@@ -113,13 +116,12 @@ void setup()
 
   dmxPlayer.loadFile(dmxFileName);
 
-  //show first 10 frames of dmx data:
+  //show a part of the dmx data:
 
-  // for (int i = dmxPlayer.frameCount-125; i < dmxPlayer.frameCount; i++)
+  // for (int i = dmxPlayer.frameCount - 10; i < dmxPlayer.frameCount; i++)
   // {
   //   Serial.print("frame: ");
-  //   Serial.print(i);
-  //   Serial.print("\t");
+  //   Serial.println(i);
   //   for (int j = 0; j < dmxPlayer.channelCount; j++)
   //   {
   //     Serial.print(dmxPlayer.dmxData[i * dmxPlayer.channelCount + j]);
@@ -307,18 +309,18 @@ void __play()
     {
       keyframeIndex++;
 
-      Serial.print("frame: ");
-      Serial.print(keyframeIndex);
-      Serial.print("\t");
+      // Serial.print("frame: ");
+      // Serial.print(keyframeIndex);
+      // Serial.print("\t");
       for (int channelIndex = 0; channelIndex < dmxPlayer.channelCount; channelIndex++)
       {
         uint8_t data = dmxPlayer.dmxData[keyframeIndex * dmxPlayer.channelCount + channelIndex];
         uint16_t channel = dmxPlayer.dmxChannels[channelIndex];
-        Serial.print(data);
-        Serial.print(", ");
+        // Serial.print(data);
+        // Serial.print(", ");
         dmxTx.set(channel, data);
       }
-      Serial.println();
+      // Serial.println();
 
       if (showEnding)
       {
@@ -338,7 +340,6 @@ void __play()
     Serial.println("show Ending");
     showEnding = true;
   }
-
 }
 
 /* ------------------------------------ */
@@ -364,6 +365,8 @@ void __incoming_serial()
       int8_t receiveError = dmxPlayer.receive_keyframes(dmxFileName);
       if (receiveError == INF_FILE_SUCCESSFUL_WRITTEN)
       {
+        delay(100);
+        dmxPlayer.loadFile(dmxFileName);
         state = __IDLE;
       }
       else
