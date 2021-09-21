@@ -3,6 +3,7 @@
 /HARDWARE/obsolete
 /DEV ARDUINO/libraries
 /DEV ARDUINO/MainController/include/pw.h
+/DEV ARDUINO/ESP32-CAM-Video-Telegram_8.8x
 .DS_Store
 
 # Prerequisites

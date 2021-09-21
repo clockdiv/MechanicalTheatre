@@ -22,6 +22,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <AccelStepper.h>
+#include <EEPROM.h>
+
 #include "UniversalTelegramBot.h"
 #include "Bounce2.h"
 #include "ESP32_tone.h"
@@ -59,17 +61,20 @@ ESP32_tone toneBuzzer(0);
 unsigned long millisOld = 0, millisCurrent; // meassuring time to get into the fps-rhythm
 unsigned long millisIdle = 0;
 unsigned long teensyStateRequestInterval = 1000;
-uint16_t timesPlayed = 0;
 
 unsigned long millisOldStatusLED = 0;
 unsigned long statusLEDBlinkFrequency = 1000;
 bool statusLEDstate = false;
 
+const unsigned long feierabendTimeout = 14 * 60 * 60 * 1000; // 14h * 60m * 60s * 1000ms
+
 states state;
 states stateOld;
 
 bool startFromTelegram = false;
-uint16_t showCounter = 0;
+uint32_t showCounterManualStart = 0;
+uint32_t showCounterCoinslotStart = 0;
+uint32_t showCounterTelephoneStart = 0;
 
 uint16_t i2cTestCounter = 0, i2cTestCounter2 = 0;
 
@@ -82,6 +87,7 @@ void __wait_for_teensy();
 void __play();
 void __idle();
 void __hardware_test();
+void __feierabend();
 
 void serialEvent();
 int8_t requestTeensyState();
@@ -98,6 +104,9 @@ void statusLEDUpdate();
 
 void stopsignUp();
 void stopsignDown();
+
+void readEEPROM();
+void writeEEPROM();
 
 void MediaControllerStartStopTrigger();
 
@@ -149,6 +158,14 @@ void setup()
   powerSuppliesOff();
   coinslotDisable();
   statusLEDOff();
+  
+  readEEPROM();
+  Serial.print("times started from manual start (or show-repeat): ");
+  Serial.println(showCounterManualStart);
+  Serial.print("times started from coinslot: ");
+  Serial.println(showCounterCoinslotStart);
+  Serial.print("times started from telephone: ");
+  Serial.println(showCounterTelephoneStart);
 
   if (btnA.read() == LOW)
   {
@@ -229,11 +246,12 @@ void stateEnter()
 
   case __PLAY:
     statusLEDBlinkFrequency = 1000;
-    showCounter++;
     powerSuppliesOn();
     stopsignDown();
     // telegramMessage_tmp = "playing Show #" + String(showCounter) + " (=" + String(showCounter * 2) + "€)";
     // sendTelegramMessage(telegramMessage_tmp);
+    
+    writeEEPROM();
 
     buzzerTone(BUZZER_START_SHOW);
 
@@ -251,6 +269,12 @@ void stateEnter()
     break;
 
   case __HARDWARE_TEST:
+    break;
+
+  case __FEIERABEND:
+    buzzerTone(BUZZER_FEIERABEND);
+    coinslotDisable();
+    stopsignDown();
     break;
 
   case __UNDEFINED:
@@ -280,7 +304,7 @@ void stateExit()
     break;
 
   case __PLAY:
-    MediaControllerStartStopTrigger();
+    //MediaControllerStartStopTrigger();
     buzzerTone(BUZZER_STOP_SHOW);
     break;
 
@@ -320,6 +344,10 @@ void smRun()
 
   case __HARDWARE_TEST:
     __hardware_test();
+    break;
+
+  case __FEIERABEND:
+    __feierabend();
     break;
 
   case __UNDEFINED:
@@ -423,6 +451,7 @@ void __play()
   if (btnB.fallingEdge())
   {
     i2chandler.requestStop();
+    MediaControllerStartStopTrigger();
   }
 }
 
@@ -460,12 +489,25 @@ void __idle()
   bool _play = false;
   bool _repeatShow = !dipswitch1.read();
 
-  if (coinSlotSensor.fallingEdge() || btnA.fallingEdge())
+  if (millis() >= feierabendTimeout && !_repeatShow)
   {
+    state = __FEIERABEND;
+    return;
+  }
+
+  if (coinSlotSensor.fallingEdge())
+  {
+    showCounterCoinslotStart++;
+    _play = true;
+  }
+  else if (btnA.fallingEdge())
+  {
+    showCounterManualStart++;
     _play = true;
   }
   else if (_repeatShow && (millis() - millisIdle > 5000))
   {
+    showCounterManualStart++;
     _play = true;
   }
   else if (startFromTelegram)
@@ -478,6 +520,11 @@ void __idle()
   {
     state = __PLAY;
   }
+}
+
+/* ------------------------------------ */
+void __feierabend()
+{
 }
 
 /* ------------------------------------ */
@@ -570,7 +617,7 @@ void powerSuppliesOff()
 /* ------------------------------------ */
 void MediaControllerStartStopTrigger()
 {
-  Serial.println("media controller start");
+  Serial.println("media controller trigger");
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, HIGH);
   delay(20);
   digitalWrite(PIN_MEDIACONTROLLER_TRIGGER, LOW);
@@ -613,6 +660,38 @@ void statusLEDUpdate()
       millisOldStatusLED = millisCurrent;
     }
   }
+}
+
+/* ------------------------------------ */
+void readEEPROM()
+{
+  if (!EEPROM.begin(EEPROM_SIZE))
+  {
+    Serial.println("failed to initialise EEPROM");
+    return;
+  }
+
+  showCounterManualStart = EEPROM.readUInt(0);
+  showCounterCoinslotStart = EEPROM.readUInt(4);
+  showCounterTelephoneStart = EEPROM.readUInt(8);
+
+  EEPROM.end();
+}
+
+/* ------------------------------------ */
+void writeEEPROM()
+{
+  if (!EEPROM.begin(EEPROM_SIZE))
+  {
+    Serial.println("failed to initialise EEPROM");
+    return;
+  }
+
+  EEPROM.writeInt(0, showCounterManualStart);
+  EEPROM.writeUInt(4, showCounterCoinslotStart);
+  EEPROM.writeUInt(8, showCounterTelephoneStart);
+
+  EEPROM.end();
 }
 
 /* ------------------------------------ */
@@ -781,6 +860,9 @@ void buzzerTone(uint8_t signalID)
     delay(60);
     toneBuzzer.noTone(PIN_BUZZER);
     break;
+
+  case BUZZER_FEIERABEND:
+    break;
   }
 }
 
@@ -811,3 +893,5 @@ void stopsignDown()
     stepperStopSign.run();
   }
 }
+
+

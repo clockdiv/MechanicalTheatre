@@ -8,6 +8,7 @@ enum states {
   __PLAY,
   __HARDWARE_TEST,
   __ERROR,
+  __FEIERABEND,
   __UNDEFINED
 };
 extern states state;
@@ -19,6 +20,7 @@ static String stateStrings[] = {
   "PLAY",
   "HARDWARE TEST",
   "ERROR",
+  "FEIERABEND",
   "UNDEFINED"
 };
 
