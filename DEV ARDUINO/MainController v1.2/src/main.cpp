@@ -146,7 +146,7 @@ void setup()
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
   dipswitch1.interval(DEBOUNCE_TIME);
-  coinSlotSensor.interval(DEBOUNCE_TIME);
+  coinSlotSensor.interval(2);
   endswitchStopSign.interval(DEBOUNCE_TIME);
 
   stepperStopSign.setInterface(AccelStepper::DRIVER);

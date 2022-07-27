@@ -7,6 +7,7 @@ std::map<MotorUnit::states, String> MotorUnit::stateStringsMap =
      {__GOING_TO_ENDSWITCH, "GOING TO END SWITCH"},
      {__ENDSWITCH_PRESSED, "ENDSWITCH PRESSED"},
      {__GOING_TO_INIT, "GOING TO INIT"},
+     {__GOING_TO_FRAME_ZERO, "GOING TO FRAME ZERO"},
      {__DRIVING_SHOW, "DRIVING SHOW"},
      {__TESTDRIVE, "TESTDRIVE"},
      {__ENDSWITCH_ERROR, "ENDSWITCH ERROR"},
@@ -109,6 +110,10 @@ void MotorUnit::smRun()
     goingToInit();
     break;
 
+  case __GOING_TO_FRAME_ZERO:
+    goingToFrameZero();
+    break;
+
   case __DRIVING_SHOW:
     drivingShow();
     break;
@@ -140,6 +145,7 @@ void MotorUnit::idle()
 }
 
 /* ------------------------------------ */
+// Drives Motor back to Endswitch
 void MotorUnit::goingToEndswitch()
 {
   if (motorResetDependency == nullptr || motorResetDependency->motorState == __IDLE)
@@ -157,6 +163,7 @@ void MotorUnit::goingToEndswitch()
 }
 
 /* ------------------------------------ */
+// if endswitch pressed, go on to state GOING_TO_INIT
 void MotorUnit::endswitchPressed()
 {
   stepper.setAcceleration(150);
@@ -165,6 +172,7 @@ void MotorUnit::endswitchPressed()
 }
 
 /* ------------------------------------ */
+// drive to Init-Position and set Position to 0
 void MotorUnit::goingToInit()
 {
   if (stepper.distanceToGo() != 0)
@@ -175,7 +183,25 @@ void MotorUnit::goingToInit()
   {
     stepper.setCurrentPosition(0);
     motorState = __IDLE;
+    // stepper.moveTo(keyframeValues[0]);  // move to Position of Frame 0
+    // stepper.setSpeed(2500);
+    // motorState = __GOING_TO_FRAME_ZERO;
   }
+}
+
+/* ------------------------------------ */
+// go to the *position* of first frame, if reached set state to IDLE
+void MotorUnit::goingToFrameZero()
+{
+  if (stepper.distanceToGo() != 0)
+  {
+    stepper.runSpeedToPosition();
+  }
+  else
+  {
+    motorState = __IDLE;
+  }
+
 }
 
 /* ------------------------------------ */

@@ -16,6 +16,7 @@ private:
     __GOING_TO_ENDSWITCH,
     __ENDSWITCH_PRESSED,
     __GOING_TO_INIT,
+    __GOING_TO_FRAME_ZERO,
     __DRIVING_SHOW,
     __TESTDRIVE,
     __ENDSWITCH_ERROR,
@@ -40,6 +41,7 @@ private:
   void goingToEndswitch();
   void endswitchPressed();
   void goingToInit();
+  void goingToFrameZero();
   void drivingShow();
   void endswitchError();
   void printMessage(String msg);
